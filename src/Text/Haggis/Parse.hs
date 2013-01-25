@@ -13,10 +13,8 @@ import System.FilePath.Find
 
 import Text.XmlHtml
 
-import Debug.Trace
-
 isSupportedExt :: String -> Bool
-isSupportedExt s = trace ("ext: " ++ s) (map toLower s) `elem` ["md", "gtf"]
+isSupportedExt s = (map toLower s) `elem` [".md", ".gtf"]
 
 supported :: FileInfo -> Bool
 supported info = (isRegularFile . infoStatus) info &&

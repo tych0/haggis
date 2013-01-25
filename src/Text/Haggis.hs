@@ -34,7 +34,7 @@ buildSite src tgt = do
       (createDirectoryIfMissing True . mkTgtName . infoPath) info
     makeAction info | supported info = do
       html <- (renderContent . infoPath) info
-      let target = (mkTgtName . infoPath) info
+      let target = replaceExtension (mkTgtName . infoPath $ info) ".html"
           frag = renderHtmlFragment UTF8 html
       BS.writeFile target $ toLazyByteString frag
     makeAction info | (isRegularFile . infoStatus) info =

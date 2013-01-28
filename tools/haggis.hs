@@ -29,9 +29,7 @@ options = BloghOpts
        <> help "Talk a lot about what's going on." )
 
 run :: BloghOpts -> IO ()
-run opts = do
-  actions <- buildSite (input opts) (output opts)
-  sequence_ actions
+run opts = buildSite (input opts) (output opts)
 
 main :: IO ()
 main = execParser opts >>= run

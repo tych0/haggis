@@ -58,7 +58,7 @@ mpTypeToTitle (Archive y m) =
   in "Posts from: " ++ (show y) ++ month
 
 data MultiPage = MultiPage {
-  pages :: [Page],
+  singlePages :: [Page],
   multiPageType :: MultiPageType
 }
 
@@ -88,7 +88,7 @@ readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
 buildSite :: String -> String -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
-  actions <- collectSiteElements src tgt templates
+  actions <- collectSiteElements src tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
   let multiPages = generateAggregates readPages
@@ -113,7 +113,7 @@ writeSite ps mps templates = do
       in writeThing (pagePath p) (pageTitle p) content
     writeMultiPage :: MultiPage -> IO ()
     writeMultiPage mp =
-      let xform = hq ".page" $ map bindPage $ pages mp
+      let xform = hq ".page" $ map bindPage $ singlePages mp
           content = xform $ multiple templates
           path = mpTypeToPath $ multiPageType mp
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
@@ -147,16 +147,15 @@ generateAggregates ps =
     monthArchives = buildArchive monthAndYearOf
 
     buildMultiPage :: (a -> MultiPageType) -> M.Map a [Page] -> [MultiPage]
-    buildMultiPage typeBuilder ps =
-      map (\(name, pages) -> MultiPage pages $ typeBuilder name) $ M.toList ps
+    buildMultiPage typeBuilder pm =
+      map (\(name, pages) -> MultiPage pages $ typeBuilder name) $ M.toList pm
 
 type Accum = [Either (IO ()) (IO Page)]
 collectSiteElements ::
   FilePath ->
   FilePath ->
-  SiteTemplates ->
   IO Accum
-collectSiteElements src tgt templates = foldWithHandler
+collectSiteElements src tgt = foldWithHandler
   ignoreExceptions
   always
   accumulate
@@ -164,18 +163,18 @@ collectSiteElements src tgt templates = foldWithHandler
   src
   where
     accumulate :: Accum -> FileInfo -> Accum
-    accumulate acc info = makeAction info templates : acc
+    accumulate acc info = makeAction info : acc
     ignoreExceptions _ a _ = return a
     mkTgtName :: FilePath -> FilePath
     mkTgtName = (</>) tgt . makeRelative src
-    makeAction :: FileInfo -> SiteTemplates -> Either (IO ()) (IO Page)
-    makeAction info templates | supported info = Right $ do
+    makeAction :: FileInfo -> Either (IO ()) (IO Page)
+    makeAction info | supported info = Right $ do
       let path = infoPath info
       html <- renderContent path
       let target = replaceExtension (mkTgtName path) ".html"
       return $ buildPage target html
-    makeAction info _ | isRegularFile $ infoStatus info = Left $ do
+    makeAction info | isRegularFile $ infoStatus info = Left $ do
       let path = infoPath info
       ensureDirExists path
       copyFile path (mkTgtName path)
-    makeAction _ _ = Left (return ()) -- TODO: follow symlinks?
+    makeAction _ = Left (return ()) -- TODO: follow symlinks?

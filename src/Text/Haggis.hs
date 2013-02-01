@@ -47,7 +47,7 @@ mpTypeToPath :: MultiPageType -> FilePath
 mpTypeToPath (Tag t) = "tags" </> t <.> "html"
 mpTypeToPath (DirIndex d) = d </> "index.html"
 mpTypeToPath (Archive y m) =
-  let month = fromMaybe "" $ fmap show m
+  let month = fromMaybe "index" $ fmap show m
   in "archives" </> show y </> month <.> "html"
 
 mpTypeToTitle :: MultiPageType -> String

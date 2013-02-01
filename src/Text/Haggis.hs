@@ -41,6 +41,7 @@ data MultiPageType =
   Tag String |
   DirIndex FilePath |
   Archive Integer (Maybe Int)
+  deriving (Eq, Ord, Show)
 
 mpTypeToPath :: MultiPageType -> FilePath
 mpTypeToPath (Tag t) = "tags" </> t <.> "html"
@@ -90,17 +91,17 @@ buildSite src tgt = do
   actions <- collectSiteElements src tgt templates
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
-  let (multiPages, tags) = generateIndexesAndTags readPages
+  let multiPages = generateAggregates readPages
   ps <- sequence pages
-  writeSite ps multiPages templates tags
+  writeSite ps multiPages templates
   sequence_ raws
 
-writeSite :: [Page] -> [MultiPage] -> SiteTemplates -> ([Node] -> [Node]) -> IO ()
-writeSite ps mps templates tags = do
+writeSite :: [Page] -> [MultiPage] -> SiteTemplates -> IO ()
+writeSite ps mps templates = do
   sequence_ $ map writePage ps
   sequence_ $ map writeMultiPage mps
   where
-    wrapper = tags $ root templates
+    wrapper = bindSidebar mps $ root templates
     writeThing fp title ns = do
       let xform = hq "#content" ns . hq "#title" title
           html = xform $ wrapper
@@ -117,22 +118,35 @@ writeSite ps mps templates tags = do
           path = mpTypeToPath $ multiPageType mp
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
 
+bindSidebar :: [MultiPage] -> [Node] -> [Node]
+bindSidebar mps = id
+    -- tagCounts = M.toList $ M.map length tags
+    -- tagBind = hq ".tag" (map (\(t, c) -> t ++ " (" ++ (show c) ++ ")") tagCounts)
+
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName
 
-generateIndexesAndTags :: [Page] -> ([MultiPage], [Node] -> [Node])
-generateIndexesAndTags ps =
+generateAggregates :: [Page] -> [MultiPage]
+generateAggregates ps =
   let tagPages = buildMultiPage Tag tags
       indexPages = buildMultiPage DirIndex indexes
-      tagCounts = M.toList $ M.map length tags
-      tagBind = hq ".tag" (map (\(t, c) -> t ++ " (" ++ (show c) ++ ")") tagCounts)
-  in (tagPages ++ indexPages, tagBind)
+      yearPages = buildMultiPage id yearArchives
+      monthPages = buildMultiPage id monthArchives
+  in concat [tagPages, indexPages, yearPages, monthPages]
   where
     mapAccum :: Ord a => [(a, b)] -> M.Map a [b]
     mapAccum = foldr (\(k,v) -> M.insertWith (++) k [v]) M.empty
     tags = mapAccum $ concatMap (\p -> zip (pageTags p) (repeat p)) ps
     indexes = mapAccum $ map (\p -> (dropFileName $ pagePath p, p)) ps
-    buildMultiPage :: (String -> MultiPageType) -> M.Map String [Page] -> [MultiPage]
+
+    monthAndYearOf d = let (y, m, _) = toGregorian d in (y, Just m)
+    yearOf d = let (y, _) = monthAndYearOf d in (y, Nothing)
+    buildArchive f =
+      mapAccum $ catMaybes $ map (\p -> fmap (\d -> (uncurry Archive $ f d, p)) $ pageDate p) ps
+    yearArchives = buildArchive yearOf
+    monthArchives = buildArchive monthAndYearOf
+
+    buildMultiPage :: (a -> MultiPageType) -> M.Map a [Page] -> [MultiPage]
     buildMultiPage typeBuilder ps =
       map (\(name, pages) -> MultiPage pages $ typeBuilder name) $ M.toList ps
 

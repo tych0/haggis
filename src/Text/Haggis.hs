@@ -21,46 +21,8 @@ import System.Directory
 import Text.XmlHtml
 
 import Text.Haggis.Parse
+import Text.Haggis.Types
 import Text.Hquery
-
-data SiteTemplates = SiteTemplates {
-  root :: [Node],
-  single :: [Node],
-  multiple :: [Node]
-}
-
-data Page = Page {
-  pageTitle :: String,
-  pageTags :: [String],
-  pageDate :: Maybe Day,
-  pagePath :: FilePath,
-  pageContent :: [Node]
-}
-
-data MultiPageType =
-  Tag String |
-  DirIndex FilePath |
-  Archive Integer (Maybe Int)
-  deriving (Eq, Ord, Show)
-
-mpTypeToPath :: MultiPageType -> FilePath
-mpTypeToPath (Tag t) = "tags" </> t <.> "html"
-mpTypeToPath (DirIndex d) = d </> "index.html"
-mpTypeToPath (Archive y m) =
-  let month = fromMaybe "index" $ fmap show m
-  in "archives" </> show y </> month <.> "html"
-
-mpTypeToTitle :: MultiPageType -> String
-mpTypeToTitle (Tag t) = "Tagged: " ++ t
-mpTypeToTitle (DirIndex d) = "Filed under: " ++ d
-mpTypeToTitle (Archive y m) =
-  let month = fromMaybe "" $ fmap ((" - " ++) . show) m
-  in "Posts from: " ++ (show y) ++ month
-
-data MultiPage = MultiPage {
-  singlePages :: [Page],
-  multiPageType :: MultiPageType
-}
 
 bindPage :: Page -> [Node] -> [Node]
 bindPage Page { pageTitle = title
@@ -71,14 +33,6 @@ bindPage Page { pageTitle = title
                   hq ".tags *" tags .
                   hq ".date *" (fmap show date) .
                   (hq ".content *" $ Group content)
-
-buildPage :: FilePath -> [Node] -> Page
-buildPage fp ns = Page { pageTitle = "foo"
-                       , pageTags = []
-                       , pageDate = parseDate "2013-01-28"
-                       , pagePath = fp
-                       , pageContent = ns
-                       }
 
 readTemplates :: FilePath -> IO SiteTemplates
 readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
@@ -171,9 +125,8 @@ collectSiteElements src tgt = foldWithHandler
     makeAction :: FileInfo -> Either (IO ()) (IO Page)
     makeAction info | supported info = Right $ do
       let path = infoPath info
-      html <- renderContent path
-      let target = replaceExtension (mkRelative path) ".html"
-      return $ buildPage target html
+          target = replaceExtension (mkRelative path) ".html"
+      parsePage path target
     makeAction info | isRegularFile $ infoStatus info = Left $ do
       let path = infoPath info
       let target = tgt </> mkRelative path

@@ -88,16 +88,16 @@ readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
 buildSite :: String -> String -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
-  actions <- collectSiteElements src tgt
+  actions <- collectSiteElements (src </> "src") tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
   let multiPages = generateAggregates readPages
   ps <- sequence pages
-  writeSite ps multiPages templates
+  writeSite ps multiPages templates tgt
   sequence_ raws
 
-writeSite :: [Page] -> [MultiPage] -> SiteTemplates -> IO ()
-writeSite ps mps templates = do
+writeSite :: [Page] -> [MultiPage] -> SiteTemplates -> FilePath -> IO ()
+writeSite ps mps templates out = do
   sequence_ $ map writePage ps
   sequence_ $ map writeMultiPage mps
   where
@@ -105,8 +105,9 @@ writeSite ps mps templates = do
     writeThing fp title ns = do
       let xform = hq "#content *" (Group ns) . hq "title *" title
           html = xform $ wrapper
-      ensureDirExists fp
-      BS.writeFile fp $ toLazyByteString $ renderHtmlFragment UTF8 html
+          path = out </> fp
+      ensureDirExists path
+      BS.writeFile path $ toLazyByteString $ renderHtmlFragment UTF8 html
     writePage :: Page -> IO ()
     writePage p =
       let content = bindPage p $ single templates
@@ -128,10 +129,10 @@ ensureDirExists = createDirectoryIfMissing True . dropFileName
 
 generateAggregates :: [Page] -> [MultiPage]
 generateAggregates ps =
-  let tagPages = buildMultiPage Tag tags
-      indexPages = buildMultiPage DirIndex indexes
-      yearPages = buildMultiPage id yearArchives
-      monthPages = buildMultiPage id monthArchives
+  let tagPages = buildMultiPages Tag tags
+      indexPages = buildMultiPages DirIndex indexes
+      yearPages = buildMultiPages id yearArchives
+      monthPages = buildMultiPages id monthArchives
   in concat [tagPages, indexPages, yearPages, monthPages]
   where
     mapAccum :: Ord a => [(a, b)] -> M.Map a [b]
@@ -146,8 +147,8 @@ generateAggregates ps =
     yearArchives = buildArchive yearOf
     monthArchives = buildArchive monthAndYearOf
 
-    buildMultiPage :: (a -> MultiPageType) -> M.Map a [Page] -> [MultiPage]
-    buildMultiPage typeBuilder pm =
+    buildMultiPages :: (a -> MultiPageType) -> M.Map a [Page] -> [MultiPage]
+    buildMultiPages typeBuilder pm =
       map (\(name, pages) -> MultiPage pages $ typeBuilder name) $ M.toList pm
 
 type Accum = [Either (IO ()) (IO Page)]
@@ -165,17 +166,17 @@ collectSiteElements src tgt = foldWithHandler
     accumulate :: Accum -> FileInfo -> Accum
     accumulate acc info = makeAction info : acc
     ignoreExceptions _ a _ = return a
-    mkTgtName :: FilePath -> FilePath
-    mkTgtName = (</>) tgt . makeRelative src
+    mkRelative :: FilePath -> FilePath
+    mkRelative = makeRelative src
     makeAction :: FileInfo -> Either (IO ()) (IO Page)
     makeAction info | supported info = Right $ do
       let path = infoPath info
       html <- renderContent path
-      let target = replaceExtension (mkTgtName path) ".html"
+      let target = replaceExtension (mkRelative path) ".html"
       return $ buildPage target html
     makeAction info | isRegularFile $ infoStatus info = Left $ do
       let path = infoPath info
-      let target = mkTgtName path
+      let target = tgt </> mkRelative path
       ensureDirExists target
       copyFile path target
     makeAction _ = Left (return ()) -- TODO: follow symlinks?

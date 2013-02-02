@@ -30,7 +30,9 @@ bindPage Page { pageTitle = title
               , pageDate = date
               , pageContent = content
               } = hq ".title *" title .
-                  hq ".tags *" tags .
+                  (if null tags then hq ".tags" nothing else hq ".tag" tags) .
+                  -- TODO: what if author but no date?
+                  maybe (hq ".byline" nothing) (hq ".author") (fmap show date) .
                   hq ".date *" (fmap show date) .
                   (hq ".content *" $ Group content)
 

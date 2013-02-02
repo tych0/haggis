@@ -67,10 +67,10 @@ bindPage Page { pageTitle = title
               , pageTags = tags
               , pageDate = date
               , pageContent = content
-              } = hq ".title" title .
-                  hq ".tags" tags .
-                  hq ".date" (fmap show date) .
-                  hq ".content" content
+              } = hq ".title *" title .
+                  hq ".tags *" tags .
+                  hq ".date *" (fmap show date) .
+                  (hq ".content *" $ Group content)
 
 buildPage :: FilePath -> [Node] -> Page
 buildPage fp ns = Page { pageTitle = "foo"
@@ -103,7 +103,7 @@ writeSite ps mps templates = do
   where
     wrapper = bindSidebar mps $ root templates
     writeThing fp title ns = do
-      let xform = hq "#content" ns . hq "#title" title
+      let xform = hq "#content *" (Group ns) . hq "title *" title
           html = xform $ wrapper
       ensureDirExists fp
       BS.writeFile fp $ toLazyByteString $ renderHtmlFragment UTF8 html
@@ -113,7 +113,7 @@ writeSite ps mps templates = do
       in writeThing (pagePath p) (pageTitle p) content
     writeMultiPage :: MultiPage -> IO ()
     writeMultiPage mp =
-      let xform = hq ".page" $ map bindPage $ singlePages mp
+      let xform = hq ".page *" $ map bindPage $ singlePages mp
           content = xform $ multiple templates
           path = mpTypeToPath $ multiPageType mp
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
@@ -175,6 +175,7 @@ collectSiteElements src tgt = foldWithHandler
       return $ buildPage target html
     makeAction info | isRegularFile $ infoStatus info = Left $ do
       let path = infoPath info
-      ensureDirExists path
-      copyFile path (mkTgtName path)
+      let target = mkTgtName path
+      ensureDirExists target
+      copyFile path target
     makeAction _ = Left (return ()) -- TODO: follow symlinks?

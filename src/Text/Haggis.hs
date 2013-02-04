@@ -9,6 +9,8 @@ import Control.Applicative
 
 import qualified Data.ByteString.Lazy as BS
 import Data.Either
+import Data.Function
+import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Time.Calendar
@@ -57,7 +59,7 @@ writeSite ps mps templates out = do
   sequence_ $ map writePage ps
   sequence_ $ map writeMultiPage mps
   where
-    wrapper = bindSidebar mps $ root templates
+    wrapper = bindSidebar ps mps $ root templates
     writeThing fp title ns = do
       let xform = hq "#content *" (Group ns) . hq "title *" title
           html = xform $ wrapper
@@ -75,10 +77,25 @@ writeSite ps mps templates out = do
           path = mpTypeToPath $ multiPageType mp
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
 
-bindSidebar :: [MultiPage] -> [Node] -> [Node]
-bindSidebar mps = id
-    -- tagCounts = M.toList $ M.map length tags
-    -- tagBind = hq ".tag" (map (\(t, c) -> t ++ " (" ++ (show c) ++ ")") tagCounts)
+bindSidebar :: [Page] -> [MultiPage] -> [Node] -> [Node]
+bindSidebar ps mps = let (tags, archives) = bindAggregates
+                     in bindRecent . hq ".tags" tags . hq ".archives" archives
+  where
+    bindRecent :: [Node] -> [Node]
+    bindRecent = let recent = take 10 $ sortBy (compare `on` pageDate) ps
+                     bind p = hq "a [href]" ("/" </> pagePath p) .
+                              hq "a *" (pageTitle p) .
+                              hq ".author" (pageAuthor p)
+                 in hq ".recentPost *" (map bind recent)
+    bindAggregates :: ([[Node] -> [Node]], [[Node] -> [Node]])
+    bindAggregates = let bind (MultiPage xs typ@(Archive y (Just m))) = Left $
+                           hq ".archive" (hq "a [href]" (mpTypeToPath typ) .
+                                          hq "a *" (show y ++ " - " ++ show m))
+                         bind (MultiPage _ typ@(Tag t)) = Right $
+                           hq ".tag [href]" (mpTypeToPath typ) .
+                           hq ".tag *" (t ++ ", ")
+                         bind _ = Left id
+                     in partitionEithers $ map bind mps
 
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName

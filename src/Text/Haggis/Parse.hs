@@ -100,5 +100,5 @@ keyValueParser :: Parser [(String, String)]
 keyValueParser = many keyValuePair
   where
     keyValuePair :: Parser (String, String)
-    keyValuePair = (,) <$> (many alphaNum <* string ":" <* many space)
-                       <*> many alphaNum <* newline
+    keyValuePair = (,) <$> (many alphaNum <* string ":" <* spaces)
+                       <*> many (satisfy (not . isSpace) <?> "printable") <* newline

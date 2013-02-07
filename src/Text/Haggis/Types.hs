@@ -19,7 +19,7 @@ data SiteTemplates = SiteTemplates {
   root :: [Node],
   single :: [Node],
   multiple :: [Node]
-}
+} deriving (Show)
 
 data Page = Page {
   pageTitle :: String,
@@ -28,7 +28,7 @@ data Page = Page {
   pageDate :: Maybe Day,
   pagePath :: FilePath,
   pageContent :: [Node]
-}
+} deriving (Show)
 
 data MultiPageType =
   Tag String |
@@ -53,4 +53,4 @@ mpTypeToTitle (Archive y m) =
 data MultiPage = MultiPage {
   singlePages :: [Page],
   multiPageType :: MultiPageType
-}
+} deriving (Show)

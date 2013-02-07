@@ -78,18 +78,19 @@ writeSite ps mps templates out = do
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
 
 bindSidebar :: [Page] -> [MultiPage] -> [Node] -> [Node]
-bindSidebar ps mps = let (tags, archives) = bindAggregates
-                     in bindRecent . hq ".tags" tags . hq ".archives" archives
+bindSidebar ps mps = let (archives, tags) = bindAggregates
+                     in bindRecent . hq ".tags" tags . foldl (.) id archives
   where
     bindRecent :: [Node] -> [Node]
-    bindRecent = let recent = take 10 $ sortBy (compare `on` pageDate) ps
+    bindRecent = let hasDate = filter (isJust . pageDate) ps
+                     recent = take 10 $ sortBy (compare `on` pageDate) hasDate
                      bind p = hq "a [href]" ("/" </> pagePath p) .
                               hq "a *" (pageTitle p) .
-                              hq ".author" (pageAuthor p)
+                              hq ".author *" (pageAuthor p)
                  in hq ".recentPost *" (map bind recent)
     bindAggregates :: ([[Node] -> [Node]], [[Node] -> [Node]])
     bindAggregates = let bind (MultiPage xs typ@(Archive y (Just m))) = Left $
-                           hq ".archive" (hq "a [href]" (mpTypeToPath typ) .
+                           hq ".archive *" (hq "a [href]" (mpTypeToPath typ) .
                                           hq "a *" (show y ++ " - " ++ show m))
                          bind (MultiPage _ typ@(Tag t)) = Right $
                            hq ".tag [href]" (mpTypeToPath typ) .

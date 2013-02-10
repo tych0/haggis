@@ -82,7 +82,7 @@ writeSite ps mps templates out = do
 
 filterRecent :: [Page] -> [Page]
 filterRecent ps = let hasDate = filter (isJust . pageDate) ps
-                  in take 10 $ sortBy (compare `on` pageDate) hasDate
+                  in take 10 $ reverse $ sortBy (compare `on` pageDate) hasDate
 
 bindSidebar :: [Page] -> [MultiPage] -> [Node] -> [Node]
 bindSidebar ps mps = let (archives, tags) = bindAggregates
@@ -94,12 +94,12 @@ bindSidebar ps mps = let (archives, tags) = bindAggregates
                               hq ".author *" (pageAuthor p)
                  in hq ".recentPost *" (map bind $ filterRecent ps)
     bindAggregates :: ([[Node] -> [Node]], [[Node] -> [Node]])
-    bindAggregates = let bind (MultiPage xs typ@(Archive y (Just m))) = Left $
-                           hq "a [href]" (mpTypeToPath typ) .
+    bindAggregates = let bind (MultiPage _ typ@(Archive y (Just m))) = Left $
+                           hq "a [href]" ("/" </> mpTypeToPath typ) .
                            hq "a *" (show y ++ " - " ++ show m)
-                         bind (MultiPage _ typ@(Tag t)) = Right $
-                           hq ".tag [href]" (mpTypeToPath typ) .
-                           hq ".tag *" (t ++ ", ")
+                         bind (MultiPage xs typ@(Tag t)) = Right $
+                           hq ".tag [href]" ("/" </> mpTypeToPath typ) .
+                           hq ".tag *" (t ++ " (" ++ show (length xs) ++ "), ")
                          bind _ = Left id
                      in partitionEithers $ map bind mps
 

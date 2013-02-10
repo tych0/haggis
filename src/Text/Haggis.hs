@@ -30,13 +30,15 @@ bindPage :: Page -> [Node] -> [Node]
 bindPage Page { pageTitle = title
               , pageTags = tags
               , pageDate = date
+              , pagePath = path
               , pageContent = content
               } = hq ".title *" title .
                   (if null tags then hq ".tags" nothing else hq ".tag" tags) .
                   -- TODO: what if author but no date?
-                  maybe (hq ".byline" nothing) (hq ".author *") (fmap show date) .
+                  maybe (hq ".byline" nothing) (hq ".date *") (fmap show date) .
                   hq ".date *" (fmap show date) .
-                  (hq ".content *" $ Group content)
+                  (hq ".content *" $ Group content) .
+                  hq ".more [href]" ("/" </> path)
 
 readTemplates :: FilePath -> IO SiteTemplates
 readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
@@ -46,10 +48,11 @@ readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
 buildSite :: String -> String -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
-  actions <- collectSiteElements (src </> "src") tgt
+  let rootDir = src </> "src"
+  actions <- collectSiteElements rootDir tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
-  let multiPages = generateAggregates readPages
+  let multiPages = generateAggregates readPages rootDir
   ps <- sequence pages
   writeSite ps multiPages templates tgt
   sequence_ raws
@@ -77,21 +80,23 @@ writeSite ps mps templates out = do
           path = mpTypeToPath $ multiPageType mp
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
 
+filterRecent :: [Page] -> [Page]
+filterRecent ps = let hasDate = filter (isJust . pageDate) ps
+                  in take 10 $ sortBy (compare `on` pageDate) hasDate
+
 bindSidebar :: [Page] -> [MultiPage] -> [Node] -> [Node]
 bindSidebar ps mps = let (archives, tags) = bindAggregates
-                     in bindRecent . hq ".tags" tags . foldl (.) id archives
+                     in bindRecent . hq ".tag" tags . hq ".archive *" archives
   where
     bindRecent :: [Node] -> [Node]
-    bindRecent = let hasDate = filter (isJust . pageDate) ps
-                     recent = take 10 $ sortBy (compare `on` pageDate) hasDate
-                     bind p = hq "a [href]" ("/" </> pagePath p) .
+    bindRecent = let bind p = hq "a [href]" ("/" </> pagePath p) .
                               hq "a *" (pageTitle p) .
                               hq ".author *" (pageAuthor p)
-                 in hq ".recentPost *" (map bind recent)
+                 in hq ".recentPost *" (map bind $ filterRecent ps)
     bindAggregates :: ([[Node] -> [Node]], [[Node] -> [Node]])
     bindAggregates = let bind (MultiPage xs typ@(Archive y (Just m))) = Left $
-                           hq ".archive *" (hq "a [href]" (mpTypeToPath typ) .
-                                          hq "a *" (show y ++ " - " ++ show m))
+                           hq "a [href]" (mpTypeToPath typ) .
+                           hq "a *" (show y ++ " - " ++ show m)
                          bind (MultiPage _ typ@(Tag t)) = Right $
                            hq ".tag [href]" (mpTypeToPath typ) .
                            hq ".tag *" (t ++ ", ")
@@ -101,19 +106,20 @@ bindSidebar ps mps = let (archives, tags) = bindAggregates
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName
 
-generateAggregates :: [Page] -> [MultiPage]
-generateAggregates ps =
+generateAggregates :: [Page] -> FilePath -> [MultiPage]
+generateAggregates ps rootDir =
   let tagPages = buildMultiPages Tag tags
       indexPages = buildMultiPages DirIndex indexes
       yearPages = buildMultiPages id yearArchives
       monthPages = buildMultiPages id monthArchives
-  in concat [tagPages, indexPages, yearPages, monthPages]
+      rootIndex = MultiPage (filterRecent ps) (DirIndex rootDir)
+  in rootIndex : concat [tagPages, indexPages, yearPages, monthPages]
   where
     mapAccum :: Ord a => [(a, b)] -> M.Map a [b]
     mapAccum = foldr (\(k,v) -> M.insertWith (++) k [v]) M.empty
     tags = mapAccum $ concatMap (\p -> zip (pageTags p) (repeat p)) ps
-    indexes = mapAccum $ map (\p -> (dropFileName $ pagePath p, p)) ps
-
+    indexes = let noroot = filter ((/=) rootDir . pagePath) ps
+              in mapAccum $ map (\p -> (dropFileName $ pagePath p, p)) noroot
     monthAndYearOf d = let (y, m, _) = toGregorian d in (y, Just m)
     yearOf d = let (y, _) = monthAndYearOf d in (y, Nothing)
     buildArchive f =

@@ -82,7 +82,7 @@ parsePage fp target = do
         let (md, content) = dieOnParseError $ parse inFileMetadata "" contents
         return $ (buildPage $ fromMaybe [] md, content)
     dieOnParseError :: Show e => Either e a -> a
-    dieOnParseError (Left m) = throw $ ParseException (show m)
+    dieOnParseError (Left m) = throw $ ParseException (fp ++ show m)
     dieOnParseError (Right t) = t
     buildPage :: [(String, String)] -> [Node] -> Page
     buildPage md = let m = Map.fromList md
@@ -101,4 +101,4 @@ keyValueParser = many keyValuePair
   where
     keyValuePair :: Parser (String, String)
     keyValuePair = (,) <$> (many alphaNum <* string ":" <* spaces)
-                       <*> many (satisfy (not . isSpace) <?> "printable") <* newline
+                       <*> many (satisfy ((/=) '\n') <?> "printable") <* newline

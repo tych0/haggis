@@ -7,7 +7,7 @@ directory structure and file names as the site's url structure.
 # TODO
 
   * more sausage jokes
-  * templating support
-  * index support
-  * tag support
   * comments support
+  * organize code in a sane way
+  * remove assumption about being installed at root of domain
+  * make the root index optional?

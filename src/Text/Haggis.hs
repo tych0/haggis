@@ -48,11 +48,10 @@ readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
 buildSite :: String -> String -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
-  let rootDir = src </> "src"
-  actions <- collectSiteElements rootDir tgt
+  actions <- collectSiteElements (src </> "src") tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
-  let multiPages = generateAggregates readPages rootDir
+  let multiPages = generateAggregates readPages
   ps <- sequence pages
   writeSite ps multiPages templates tgt
   sequence_ raws
@@ -100,25 +99,25 @@ bindSidebar ps mps = let (archives, tags) = bindAggregates
                          bind (MultiPage xs typ@(Tag t)) = Right $
                            hq ".tag [href]" ("/" </> mpTypeToPath typ) .
                            hq ".tag *" (t ++ " (" ++ show (length xs) ++ "), ")
-                         bind _ = Left id
+                         bind _ = Left $ hq "*" nothing
                      in partitionEithers $ map bind mps
 
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName
 
-generateAggregates :: [Page] -> FilePath -> [MultiPage]
-generateAggregates ps rootDir =
+generateAggregates :: [Page] -> [MultiPage]
+generateAggregates ps =
   let tagPages = buildMultiPages Tag tags
       indexPages = buildMultiPages DirIndex indexes
       yearPages = buildMultiPages id yearArchives
       monthPages = buildMultiPages id monthArchives
-      rootIndex = MultiPage (filterRecent ps) (DirIndex rootDir)
+      rootIndex = MultiPage (filterRecent ps) (DirIndex "./")
   in rootIndex : concat [tagPages, indexPages, yearPages, monthPages]
   where
     mapAccum :: Ord a => [(a, b)] -> M.Map a [b]
     mapAccum = foldr (\(k,v) -> M.insertWith (++) k [v]) M.empty
     tags = mapAccum $ concatMap (\p -> zip (pageTags p) (repeat p)) ps
-    indexes = let noroot = filter ((/=) rootDir . pagePath) ps
+    indexes = let noroot = filter ((/=) "./" . dropFileName . pagePath) ps
               in mapAccum $ map (\p -> (dropFileName $ pagePath p, p)) noroot
     monthAndYearOf d = let (y, m, _) = toGregorian d in (y, Just m)
     yearOf d = let (y, _) = monthAndYearOf d in (y, Nothing)

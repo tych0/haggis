@@ -33,12 +33,16 @@ bindPage Page { pageTitle = title
               , pagePath = path
               , pageContent = content
               } = hq ".title *" title .
-                  (if null tags then hq ".tags" nothing else hq ".tag" tags) .
+                  (if null tags then hq ".tags" nothing else hq ".tag *" (map bindTag tags)) .
                   -- TODO: what if author but no date?
                   maybe (hq ".byline" nothing) (hq ".date *") (fmap show date) .
                   hq ".date *" (fmap show date) .
                   (hq ".content *" $ Group content) .
                   hq ".more [href]" ("/" </> path)
+
+bindTag :: String -> [Node] -> [Node]
+bindTag t = hq ".tag [href]" ("/" </> (mpTypeToPath $ Tag t)) .
+            hq ".tag *" (t ++ ", ")
 
 readTemplates :: FilePath -> IO SiteTemplates
 readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")

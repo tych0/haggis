@@ -8,6 +8,6 @@ directory structure and file names as the site's url structure.
 
   * more sausage jokes
   * comments support
-  * organize code in a sane way
+  * organize code in a sane way, also remove some binding duplication
   * remove assumption about being installed at root of domain
   * make the root index optional?

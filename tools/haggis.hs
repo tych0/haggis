@@ -6,8 +6,6 @@ import Text.Haggis
 
 data BloghOpts = BloghOpts { input :: String
                            , output :: String
-                           , config :: String
-                           , verbose :: Bool
                            }
 
 options :: Parser BloghOpts
@@ -20,13 +18,6 @@ options = BloghOpts
         ( long "output"
        <> metavar "OUTPUT"
        <> help "Output directory for site results." )
-    <*> strOption
-        ( long "config"
-       <> metavar "CONFIG"
-       <> help "Location of your .blogh configuration file." )
-    <*> switch
-        ( long "verbose"
-       <> help "Talk a lot about what's going on." )
 
 run :: BloghOpts -> IO ()
 run opts = buildSite (input opts) (output opts)

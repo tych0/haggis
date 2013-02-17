@@ -48,6 +48,8 @@ readTemplates :: FilePath -> IO SiteTemplates
 readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
                                  <*> readTemplate (fp </> "single.html")
                                  <*> readTemplate (fp </> "multiple.html")
+                                 <*> readTemplate (fp </> "tags.html")
+                                 <*> readTemplate (fp </> "archives.html")
 
 buildSite :: String -> String -> IO ()
 buildSite src tgt = do
@@ -56,8 +58,9 @@ buildSite src tgt = do
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
   let multiPages = generateAggregates readPages
-  ps <- sequence pages
-  writeSite ps multiPages templates tgt
+      specialPages = generateSpecial templates multiPages
+      allPages = concat [readPages, specialPages]
+  writeSite allPages multiPages templates tgt
   sequence_ raws
 
 writeSite :: [Page] -> [MultiPage] -> SiteTemplates -> FilePath -> IO ()
@@ -65,7 +68,7 @@ writeSite ps mps templates out = do
   sequence_ $ map writePage ps
   sequence_ $ map writeMultiPage mps
   where
-    wrapper = bindSidebar ps mps $ root templates
+    wrapper = bindSpecial mps $ root templates
     writeThing fp title ns = do
       let xform = hq "#content *" (Group ns) . hq "title *" title
           html = xform $ wrapper
@@ -87,15 +90,10 @@ filterRecent :: [Page] -> [Page]
 filterRecent ps = let hasDate = filter (isJust . pageDate) ps
                   in take 10 $ reverse $ sortBy (compare `on` pageDate) hasDate
 
-bindSidebar :: [Page] -> [MultiPage] -> [Node] -> [Node]
-bindSidebar ps mps = let (archives, tags) = bindAggregates
-                     in bindRecent . hq ".tag" tags . hq ".archive *" archives
+bindSpecial :: [MultiPage] -> [Node] -> [Node]
+bindSpecial mps = let (archives, tags) = bindAggregates
+                  in hq ".tag" tags . hq ".archive *" archives
   where
-    bindRecent :: [Node] -> [Node]
-    bindRecent = let bind p = hq "a [href]" ("/" </> pagePath p) .
-                              hq "a *" (pageTitle p) .
-                              hq ".author *" (pageAuthor p)
-                 in hq ".recentPost *" (map bind $ filterRecent ps)
     bindAggregates :: ([[Node] -> [Node]], [[Node] -> [Node]])
     bindAggregates = let bind (MultiPage _ typ@(Archive y (Just m))) = Left $
                            hq "a [href]" ("/" </> mpTypeToPath typ) .
@@ -108,6 +106,18 @@ bindSidebar ps mps = let (archives, tags) = bindAggregates
 
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName
+
+generateSpecial :: SiteTemplates -> [MultiPage] -> [Page]
+generateSpecial templates mps =
+  let bind = bindSpecial mps
+      archivesContent = bind (archivesTemplate templates)
+      archives = plainPage "Archives" "./archives/index.html" archivesContent
+      tagsContent = bind (tagsTemplate templates)
+      tags = plainPage "Tags" "./tags/index.html" tagsContent
+  in [archives, tags]
+  where
+    plainPage :: String -> FilePath -> [Node] -> Page
+    plainPage title fp content = Page title Nothing [] Nothing fp content
 
 generateAggregates :: [Page] -> [MultiPage]
 generateAggregates ps =
@@ -129,7 +139,6 @@ generateAggregates ps =
       mapAccum $ catMaybes $ map (\p -> fmap (\d -> (uncurry Archive $ f d, p)) $ pageDate p) ps
     yearArchives = buildArchive yearOf
     monthArchives = buildArchive monthAndYearOf
-
     buildMultiPages :: (a -> MultiPageType) -> M.Map a [Page] -> [MultiPage]
     buildMultiPages typeBuilder pm =
       map (\(name, pages) -> MultiPage pages $ typeBuilder name) $ M.toList pm

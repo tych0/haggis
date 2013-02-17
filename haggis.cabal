@@ -15,7 +15,8 @@ library
                  directory >= 1.1, unix >= 2.5, bytestring >= 0.9,
                  blaze-builder >= 0.3, pandoc >= 1.10, pandoc-types >= 1.10,
                  xmlhtml >= 0.2, containers >= 0.4, hquery >= 0.1.0.1,
-                 time >= 1.4, old-locale, parsec >= 3.1, split >= 0.2
+                 time >= 1.4, old-locale, parsec >= 3.1, split >= 0.2,
+                 text >= 0.11
   hs-source-dirs: src
   exposed-modules: Text.Haggis, Text.Haggis.Parse, Text.Haggis.Types
   ghc-options: -Wall

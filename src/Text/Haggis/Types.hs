@@ -18,7 +18,9 @@ import Text.XmlHtml
 data SiteTemplates = SiteTemplates {
   root :: [Node],
   single :: [Node],
-  multiple :: [Node]
+  multiple :: [Node],
+  tagsTemplate :: [Node],
+  archivesTemplate :: [Node]
 } deriving (Show)
 
 data Page = Page {

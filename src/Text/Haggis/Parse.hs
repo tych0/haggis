@@ -58,8 +58,11 @@ renderContent fp = do
 readTemplate :: FilePath -> IO [Node]
 readTemplate fp = do
   inp <- readFile fp
-  let parseResult = parseHTML fp (BS.pack inp)
-  return $ either (throw . ParseException) docContent parseResult
+  return $ parseHtmlString inp
+
+parseHtmlString :: String -> [Node]
+parseHtmlString s = let parseResult = parseHTML "string" (BS.pack s)
+                    in either (throw . ParseException) docContent parseResult
 
 parsePage :: FilePath -> FilePath -> IO Page
 parsePage fp target = do

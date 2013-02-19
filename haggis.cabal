@@ -18,7 +18,8 @@ library
                  time >= 1.4, old-locale, parsec >= 3.1, split >= 0.2,
                  text >= 0.11
   hs-source-dirs: src
-  exposed-modules: Text.Haggis, Text.Haggis.Parse, Text.Haggis.Types
+  exposed-modules: Text.Haggis, Text.Haggis.Parse, Text.Haggis.Types,
+                   Text.Haggis.Binders
   ghc-options: -Wall
 
 executable haggis

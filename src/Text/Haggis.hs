@@ -22,27 +22,10 @@ import System.Directory
 
 import Text.XmlHtml
 
+import Text.Haggis.Binders
 import Text.Haggis.Parse
 import Text.Haggis.Types
 import Text.Hquery
-
-bindPage :: Page -> [Node] -> [Node]
-bindPage Page { pageTitle = title
-              , pageTags = tags
-              , pageDate = date
-              , pagePath = path
-              , pageContent = content
-              } = hq ".title *" title .
-                  (if null tags then hq ".tags" nothing else hq ".tag *" (map bindTag tags)) .
-                  -- TODO: what if author but no date?
-                  maybe (hq ".byline" nothing) (hq ".date *") (fmap show date) .
-                  hq ".date *" (fmap show date) .
-                  (hq ".content *" $ Group content) .
-                  hq ".more [href]" ("/" </> path)
-
-bindTag :: String -> [Node] -> [Node]
-bindTag t = hq ".tag [href]" ("/" </> (mpTypeToPath $ Tag t)) .
-            hq ".tag *" (t ++ ", ")
 
 readTemplates :: FilePath -> IO SiteTemplates
 readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
@@ -86,24 +69,6 @@ writeSite ps mps templates out = do
           path = mpTypeToPath $ multiPageType mp
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
 
-filterRecent :: [Page] -> [Page]
-filterRecent ps = let hasDate = filter (isJust . pageDate) ps
-                  in take 10 $ reverse $ sortBy (compare `on` pageDate) hasDate
-
-bindSpecial :: [MultiPage] -> [Node] -> [Node]
-bindSpecial mps = let (archives, tags) = bindAggregates
-                  in hq ".tag" tags . hq ".archive *" archives
-  where
-    bindAggregates :: ([[Node] -> [Node]], [[Node] -> [Node]])
-    bindAggregates = let bind (MultiPage _ typ@(Archive y (Just m))) = Left $
-                           hq "a [href]" ("/" </> mpTypeToPath typ) .
-                           hq "a *" (show y ++ " - " ++ show m)
-                         bind (MultiPage xs typ@(Tag t)) = Right $
-                           hq ".tag [href]" ("/" </> mpTypeToPath typ) .
-                           hq ".tag *" (t ++ " (" ++ show (length xs) ++ "), ")
-                         bind _ = Left $ hq "*" nothing
-                     in partitionEithers $ map bind mps
-
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName
 
@@ -125,7 +90,7 @@ generateAggregates ps =
       indexPages = buildMultiPages DirIndex indexes
       yearPages = buildMultiPages id yearArchives
       monthPages = buildMultiPages id monthArchives
-      rootIndex = MultiPage (filterRecent ps) (DirIndex "./")
+      rootIndex = MultiPage recent (DirIndex "./")
   in rootIndex : concat [tagPages, indexPages, yearPages, monthPages]
   where
     mapAccum :: Ord a => [(a, b)] -> M.Map a [b]
@@ -142,6 +107,8 @@ generateAggregates ps =
     buildMultiPages :: (a -> MultiPageType) -> M.Map a [Page] -> [MultiPage]
     buildMultiPages typeBuilder pm =
       map (\(name, pages) -> MultiPage pages $ typeBuilder name) $ M.toList pm
+    recent = let hasDate = filter (isJust . pageDate) ps
+             in take 10 $ reverse $ sortBy (compare `on` pageDate) hasDate
 
 type Accum = [Either (IO ()) (IO Page)]
 collectSiteElements ::

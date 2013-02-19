@@ -1,9 +1,14 @@
 module Text.Haggis.Types (
+  -- * Container for the required site templates
   SiteTemplates(..),
+  -- * Representation of a single haggis page
   Page(..),
+  -- * Representation of multiple pages (e.g. an index.html for a directory,
+  --   or a list of posts with a specific tag)
   MultiPage(..),
+  -- * The type of the pages
   MultiPageType(..),
-
+  -- ** conversions for 'MultiPageType's
   mpTypeToPath,
   mpTypeToTitle
   ) where
@@ -28,7 +33,10 @@ data Page = Page {
   pageAuthor :: Maybe String,
   pageTags :: [String],
   pageDate :: Maybe Day,
+  -- The 'pagePath' is relative to the source dir.
   pagePath :: FilePath,
+  -- This is the content as rendered by pandoc (i.e. it has not been bound to
+  -- the single.html template)
   pageContent :: [Node]
 } deriving (Show)
 

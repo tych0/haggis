@@ -34,7 +34,7 @@ readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
                                  <*> readTemplate (fp </> "tags.html")
                                  <*> readTemplate (fp </> "archives.html")
 
-buildSite :: String -> String -> IO ()
+buildSite :: FilePath -> FilePath -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
   actions <- collectSiteElements (src </> "src") tgt

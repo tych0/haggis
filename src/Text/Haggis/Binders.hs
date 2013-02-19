@@ -1,6 +1,10 @@
+{- | Contains binding utility functions. -}
 module Text.Haggis.Binders (
+  -- * Create a transformer which will bind the 'Page' to a template.
   bindPage,
+  -- * Bind the specified tag to an anchor.
   bindTag,
+  -- * Bind the archives and tags.
   bindSpecial
   ) where
 

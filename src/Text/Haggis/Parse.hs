@@ -1,6 +1,19 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DoAndIfThenElse #-} -- TODO: get rid of this?
-module Text.Haggis.Parse where
+module Text.Haggis.Parse (
+ -- * Exception thrown when some template or user input document fails to
+ --   parse
+ ParseException(..),
+
+ -- * Is this a pandoc supported file?
+ supported,
+ -- * Parse a date in YYYY-MM-DD format.
+ parseDate,
+ -- * Utility functions for reading templates
+ readTemplate,
+ parseHtmlString,
+ parsePage
+ ) where
 
 import Control.Applicative hiding (many)
 import Control.Exception
@@ -36,7 +49,6 @@ instance Exception ParseException
 
 fileTypes :: Map.Map String (String -> Pandoc)
 fileTypes = Map.fromList [ (".md", readMarkdown def)
-                         , (".gtf", readMarkdown def)
                          ]
 
 isSupportedExt :: String -> Bool
@@ -48,12 +60,6 @@ supported info = (isRegularFile . infoStatus) info &&
 
 parseDate :: String -> Maybe Day
 parseDate = parseTime defaultTimeLocale "%F"
-
-renderContent :: FilePath -> IO [Node]
-renderContent fp = do
-  s <- readFile fp
-  let Just reader = Map.lookup (takeExtension fp) fileTypes
-  return $ renderHtmlNodes $ writeHtml def $ reader s
 
 readTemplate :: FilePath -> IO [Node]
 readTemplate fp = do

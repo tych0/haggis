@@ -12,11 +12,11 @@ options :: Parser BloghOpts
 options = BloghOpts
     <$> strOption
         ( long "input"
-       <> metavar "INPUT"
+       <> metavar "DIR"
        <> help "Input contents (directory) for your web site." )
     <*> strOption
         ( long "output"
-       <> metavar "OUTPUT"
+       <> metavar "DIR"
        <> help "Output directory for site results." )
 
 run :: BloghOpts -> IO ()

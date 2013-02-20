@@ -84,8 +84,10 @@ and the result is [here](http://beta.tycho.ws).
 
 # TODO
 
+  * write some tests lol11
   * more sausage jokes
   * comments support
+  * have a configuration file so people can configure things
   * custom binders for templates
   * organize code in a sane way, also remove some binding duplication
   * allow custom pandoc options?

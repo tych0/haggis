@@ -24,10 +24,10 @@ library
                  blaze-builder >= 0.3, pandoc >= 1.10, pandoc-types >= 1.10,
                  xmlhtml >= 0.2, containers >= 0.4, hquery >= 0.1.0.2,
                  time >= 1.4, old-locale, parsec >= 3.1, split >= 0.2,
-                 text >= 0.11
+                 text >= 0.11, rss >= 3000.2, network >= 2.4
   hs-source-dirs: src
   exposed-modules: Text.Haggis, Text.Haggis.Parse, Text.Haggis.Types,
-                   Text.Haggis.Binders
+                   Text.Haggis.Binders, Text.Haggis.RSS, Text.Haggis.Utils
   ghc-options: -Wall
 
 executable haggis

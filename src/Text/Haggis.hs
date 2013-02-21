@@ -3,8 +3,6 @@ module Text.Haggis (
   buildSite
   ) where
 
-import Blaze.ByteString.Builder
-
 import Control.Applicative
 
 import qualified Data.ByteString.Lazy as BS
@@ -24,7 +22,9 @@ import Text.XmlHtml
 
 import Text.Haggis.Binders
 import Text.Haggis.Parse
+import Text.Haggis.RSS
 import Text.Haggis.Types
+import Text.Haggis.Utils
 import Text.Hquery
 
 readTemplates :: FilePath -> IO SiteTemplates
@@ -40,6 +40,7 @@ buildSite src tgt = do
   actions <- collectSiteElements (src </> "src") tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
+  _ <- generateRSS readPages tgt
   let multiPages = generateAggregates readPages
       specialPages = generateSpecial templates multiPages
       allPages = concat [readPages, specialPages]
@@ -57,7 +58,7 @@ writeSite ps mps templates out = do
           html = xform $ wrapper
           path = out </> fp
       ensureDirExists path
-      BS.writeFile path $ toLazyByteString $ renderHtmlFragment UTF8 html
+      BS.writeFile path $ renderHtml html
     writePage :: Page -> IO ()
     writePage p =
       let content = bindPage p $ single templates

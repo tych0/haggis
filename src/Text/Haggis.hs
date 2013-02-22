@@ -21,6 +21,7 @@ import System.Directory
 import Text.XmlHtml
 
 import Text.Haggis.Binders
+import Text.Haggis.Config
 import Text.Haggis.Parse
 import Text.Haggis.RSS
 import Text.Haggis.Types
@@ -37,10 +38,11 @@ readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
 buildSite :: FilePath -> FilePath -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
+  config <- parseConfig $ src </> "haggis.conf"
   actions <- collectSiteElements (src </> "src") tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
-  _ <- generateRSS readPages tgt
+  generateRSS config readPages tgt
   let multiPages = generateAggregates readPages
       specialPages = generateSpecial templates multiPages
       allPages = concat [readPages, specialPages]

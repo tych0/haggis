@@ -12,7 +12,9 @@ module Text.Haggis.Parse (
  -- * Utility functions for reading templates
  readTemplate,
  parseHtmlString,
- parsePage
+ parsePage,
+ dieOnParseError,
+ keyValueParser
  ) where
 
 import Control.Applicative hiding (many)
@@ -83,16 +85,13 @@ parsePage fp target = do
       if externalMd
       then do
         mdf <- readFile $ fp <.> "meta"
-        let md = dieOnParseError $ parse keyValueParser "" mdf
+        let md = dieOnParseError mdf $ parse keyValueParser "" mdf
         contents <- readFile fp
         return (buildPage md, contents)
       else do
         contents <- readFile fp
-        let (md, content) = dieOnParseError $ parse inFileMetadata "" contents
+        let (md, content) = dieOnParseError fp $ parse inFileMetadata "" contents
         return $ (buildPage $ fromMaybe [] md, content)
-    dieOnParseError :: Show e => Either e a -> a
-    dieOnParseError (Left m) = throw $ ParseException (fp ++ show m)
-    dieOnParseError (Right t) = t
     buildPage :: [(String, String)] -> [Node] -> Page
     buildPage md = let m = Map.fromList md
                        title = fromMaybe "" $ Map.lookup "title" m
@@ -100,6 +99,10 @@ parsePage fp target = do
                        tags = fromMaybe [] $ fmap (splitOn ", ") $ Map.lookup "tags" m
                        date = Map.lookup "date" m >>= parseTime defaultTimeLocale "%F"
                    in Page title author tags date target
+
+dieOnParseError :: Show e => String -> Either e a -> a
+dieOnParseError prefix (Left m) = throw $ ParseException (prefix ++ show m)
+dieOnParseError _ (Right t) = t
 
 inFileMetadata :: Parser (Maybe [(String, String)], String)
 inFileMetadata = (,) <$> optionMaybe (string "---" *> newline *> keyValueParser <* string "---")

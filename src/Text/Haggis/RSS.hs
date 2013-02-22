@@ -1,29 +1,30 @@
 module Text.Haggis.RSS where
 
-import Control.Exception
-
 import Data.Maybe
 import Data.Time.Clock
 
 import Network.URI
 
+import Text.Haggis.Config
 import Text.Haggis.Types
-import Text.Haggis.Parse
 import Text.Haggis.Utils
 import Text.RSS
 
 import System.FilePath
 
-generateRSS :: [Page] -> FilePath -> IO ()
-generateRSS ps target = writeFile (target </> "rss.xml") feed
+generateRSS :: HaggisConfig -> [Page] -> FilePath -> IO ()
+generateRSS conf ps target = fromMaybe (return ()) $ do
+  title <- rssTitle conf
+  desc <- rssDescription conf
+  uri <- rootUri conf
+  let rss = RSS title uri desc [] $ map (buildItem uri) ps
+  return $ writeFile (target </> "rss.xml") (showXML $ rssToXML rss)
   where
-    feed = showXML $ rssToXML $ RSS "Blog" uri "A blog" [] $ map buildItem ps
-    uri = fromMaybe (throw $ ParseException "bad uri") $ parseURI "http://tycho.ws"
-    buildItem :: Page -> Item
-    buildItem p = concat [basic, tags, date]
+    buildItem :: URI -> Page -> Item
+    buildItem baseURI p = concat [basic, tags, date]
       where
         basic = [ Title (pageTitle p)
-                , Link (uri { uriPath = (uriPath uri) </> pagePath p })
+                , Link (baseURI { uriPath = (uriPath baseURI) </> pagePath p })
                 , Description (show $ renderHtml $ pageContent p)
                 ]
         tags = map (Category Nothing) $ pageTags p

@@ -24,6 +24,7 @@ A blog using haggis has the following directory structure:
       root.html
       single.html
       tags.html
+    haggis.conf // optional, see Configuration below
     src/
       ...
 
@@ -82,12 +83,31 @@ on the index page if it's one of the 10 most recent such posts.
 A full example of haggis source is [here](http://github.com/tych0/tycho.ws),
 and the result is [here](http://beta.tycho.ws).
 
+# Configuration
+
+You can also configure a few things via `haggis.conf`. A sample configuration
+file is shown below.
+
+    sitePath: /
+    defaultAuthor: tycho
+    siteHost: tycho.ws
+    rssTitle: Chronicles of a Tall Guy
+    rssDescription: Home of Tycho Andersen on the Internets
+
+You don't need to define all the configuration options (or even make a
+`haggis.conf`); the default values are listed below:
+
+  * `sitePath` defaults to `/`
+  * `defaultAuthor` defaults to nothing, so if it is empty and your post has
+    no author in its metadata, no author will be generated
+  * `siteHost`, `rssTitle`, and `rssDescription` are all used for generating
+    RSS feeds; all three are required for haggis to build your RSS feed.
+
 # TODO
 
   * write some tests lol11
   * more sausage jokes
   * comments support
-  * have a configuration file so people can configure things
   * custom binders for templates
   * organize code in a sane way, also remove some binding duplication
   * allow custom pandoc options?

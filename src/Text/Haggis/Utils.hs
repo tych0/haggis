@@ -8,3 +8,6 @@ import Text.XmlHtml
 
 renderHtml :: [Node] -> BS.ByteString
 renderHtml = toLazyByteString . renderHtmlFragment UTF8
+
+renderXml :: [Node] -> BS.ByteString
+renderXml = toLazyByteString . renderXmlFragment UTF8

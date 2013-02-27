@@ -13,21 +13,28 @@ import Data.Either
 import System.FilePath
 
 import Text.Haggis.Types
+import Text.Haggis.Config
 import Text.Hquery
 import Text.XmlHtml
 
-bindPage :: Page -> [Node] -> [Node]
-bindPage Page { pageTitle = title
-              , pageTags = tags
-              , pageDate = date
-              , pagePath = path
-              , pageContent = content
-              } = hq ".title *" title .
-                  (if null tags then hq ".tags" nothing else hq ".tag *" (map bindTag tags)) .
-                  hq ".date *" (fmap show date) .
-                  hq ".date *" (fmap show date) .
-                  (hq ".content *" $ Group content) .
-                  hq ".more [href]" ("/" </> path)
+bindPage :: HaggisConfig -> Page -> [Node] -> [Node]
+bindPage config Page { pageTitle = title
+                     , pageAuthor = author
+                     , pageTags = tags
+                     , pageDate = date
+                     , pagePath = path
+                     , pageContent = content
+                     } =
+  let bindTags = if null tags
+                   then hq ".tags" nothing
+                   else hq ".tag *" (map bindTag tags)
+      auth = maybe (defaultAuthor config) Just author
+  in hq ".title *" title .
+     bindTags .
+     hq ".author *" auth .
+     hq ".date *" (fmap show date) .
+     (hq ".content *" $ Group content) .
+     hq ".more [href]" ("/" </> path)
 
 bindTag :: String -> [Node] -> [Node]
 bindTag t = hq "a [href]" ("/" </> (mpTypeToPath $ Tag t)) .

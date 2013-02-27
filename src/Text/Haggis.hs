@@ -3,8 +3,6 @@ module Text.Haggis (
   buildSite
   ) where
 
-import Control.Applicative
-
 import qualified Data.ByteString.Lazy as BS
 import Data.Either
 import Data.Function
@@ -28,17 +26,10 @@ import Text.Haggis.Types
 import Text.Haggis.Utils
 import Text.Hquery
 
-readTemplates :: FilePath -> IO SiteTemplates
-readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
-                                 <*> readTemplate (fp </> "single.html")
-                                 <*> readTemplate (fp </> "multiple.html")
-                                 <*> readTemplate (fp </> "tags.html")
-                                 <*> readTemplate (fp </> "archives.html")
-
 buildSite :: FilePath -> FilePath -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
-  config <- parseConfig $ src </> "haggis.conf"
+  config <- parseConfig (src </> "haggis.conf") templates
   actions <- collectSiteElements (src </> "src") tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
@@ -46,15 +37,15 @@ buildSite src tgt = do
   let multiPages = generateAggregates readPages
       specialPages = generateSpecial templates multiPages
       allPages = concat [readPages, specialPages]
-  writeSite allPages multiPages templates tgt
+  writeSite allPages multiPages config tgt
   sequence_ raws
 
-writeSite :: [Page] -> [MultiPage] -> SiteTemplates -> FilePath -> IO ()
-writeSite ps mps templates out = do
+writeSite :: [Page] -> [MultiPage] -> HaggisConfig -> FilePath -> IO ()
+writeSite ps mps config out = do
   sequence_ $ map writePage ps
   sequence_ $ map writeMultiPage mps
   where
-    wrapper = bindSpecial mps $ root templates
+    wrapper = bindSpecial mps $ root (siteTemplates config)
     writeThing fp title ns = do
       let xform = hq "#content *" (Group ns) . hq "title *" title
           html = xform $ wrapper
@@ -63,12 +54,12 @@ writeSite ps mps templates out = do
       BS.writeFile path $ renderHtml html
     writePage :: Page -> IO ()
     writePage p =
-      let content = bindPage p $ single templates
+      let content = bindPage config p $ single (siteTemplates config)
       in writeThing (pagePath p) (pageTitle p) content
     writeMultiPage :: MultiPage -> IO ()
     writeMultiPage mp =
-      let xform = hq ".page *" $ map bindPage $ singlePages mp
-          content = xform $ multiple templates
+      let xform = hq ".page *" $ map (bindPage config) $ singlePages mp
+          content = xform $ multiple (siteTemplates config)
           path = mpTypeToPath $ multiPageType mp
       in writeThing path (mpTypeToTitle $ multiPageType mp) content
 

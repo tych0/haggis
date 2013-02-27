@@ -111,6 +111,5 @@ You don't need to define all the configuration options (or even make a
   * custom binders for templates
   * organize code in a sane way, also remove some binding duplication
   * allow custom pandoc options?
-  * remove assumption about being installed at root of domain
   * make the root index optional?
   * make tags/archives optional?

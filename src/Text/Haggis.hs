@@ -33,19 +33,19 @@ buildSite src tgt = do
   actions <- collectSiteElements (src </> "src") tgt
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
-  generateRSS config readPages tgt
   let multiPages = generateAggregates readPages
-      specialPages = generateSpecial templates multiPages
+      specialPages = generateSpecial config multiPages
       allPages = concat [readPages, specialPages]
-  writeSite allPages multiPages config tgt
   sequence_ raws
+  generateRSS config readPages tgt
+  writeSite allPages multiPages config tgt
 
 writeSite :: [Page] -> [MultiPage] -> HaggisConfig -> FilePath -> IO ()
 writeSite ps mps config out = do
   sequence_ $ map writePage ps
   sequence_ $ map writeMultiPage mps
   where
-    wrapper = bindSpecial mps $ root (siteTemplates config)
+    wrapper = bindSpecial config mps $ root (siteTemplates config)
     writeThing fp title ns = do
       let xform = hq "#content *" (Group ns) . hq "title *" title
           html = xform $ wrapper
@@ -66,12 +66,12 @@ writeSite ps mps config out = do
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName
 
-generateSpecial :: SiteTemplates -> [MultiPage] -> [Page]
-generateSpecial templates mps =
-  let bind = bindSpecial mps
-      archivesContent = bind (archivesTemplate templates)
+generateSpecial :: HaggisConfig -> [MultiPage] -> [Page]
+generateSpecial config mps =
+  let bind = bindSpecial config mps
+      archivesContent = bind (archivesTemplate $ siteTemplates config)
       archives = plainPage "Archives" "./archives/index.html" archivesContent
-      tagsContent = bind (tagsTemplate templates)
+      tagsContent = bind (tagsTemplate $ siteTemplates config)
       tags = plainPage "Tags" "./tags/index.html" tagsContent
   in [archives, tags]
   where

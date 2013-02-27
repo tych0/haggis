@@ -27,29 +27,29 @@ bindPage config Page { pageTitle = title
                      } =
   let bindTags = if null tags
                    then hq ".tags" nothing
-                   else hq ".tag *" (map bindTag tags)
+                   else hq ".tag *" (map (bindTag config) tags)
       auth = maybe (defaultAuthor config) Just author
   in hq ".title *" title .
      bindTags .
      hq ".author *" auth .
      hq ".date *" (fmap show date) .
      (hq ".content *" $ Group content) .
-     hq ".more [href]" ("/" </> path)
+     hq ".more [href]" (sitePath config </> path)
 
-bindTag :: String -> [Node] -> [Node]
-bindTag t = hq "a [href]" ("/" </> (mpTypeToPath $ Tag t)) .
-            hq "a *" (t ++ ", ")
+bindTag :: HaggisConfig -> String -> [Node] -> [Node]
+bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .
+                   hq "a *" (t ++ ", ")
 
-bindSpecial :: [MultiPage] -> [Node] -> [Node]
-bindSpecial mps = let (archives, tags) = bindAggregates
-                  in hq ".tag" tags . hq ".archive *" archives
+bindSpecial :: HaggisConfig -> [MultiPage] -> [Node] -> [Node]
+bindSpecial config mps = let (archives, tags) = bindAggregates
+                         in hq ".tag" tags . hq ".archive *" archives
   where
     bindAggregates :: ([[Node] -> [Node]], [[Node] -> [Node]])
     bindAggregates = let bind (MultiPage _ typ@(Archive y (Just m))) = Left $
-                           hq "a [href]" ("/" </> mpTypeToPath typ) .
+                           hq "a [href]" (sitePath config </> mpTypeToPath typ) .
                            hq "a *" (show y ++ " - " ++ show m)
                          bind (MultiPage xs typ@(Tag t)) = Right $
-                           hq ".tag [href]" ("/" </> mpTypeToPath typ) .
+                           hq ".tag [href]" (sitePath config </> mpTypeToPath typ) .
                            hq ".tag *" (t ++ " (" ++ show (length xs) ++ "), ")
                          bind _ = Left $ hq "*" nothing
                      in partitionEithers $ map bind mps

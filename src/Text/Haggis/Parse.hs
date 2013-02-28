@@ -35,15 +35,16 @@ import Text.Pandoc.Writers.HTML
 import Text.Pandoc.Options
 import Text.Pandoc.Definition
 import Text.Haggis.Types
-import Text.Parsec
-import Text.Parsec.String
-import Text.XmlHtml
 
 import System.Directory
 import System.Posix.Files.ByteString
 import System.FilePath
 import System.FilePath.Find
 import System.Locale
+
+import Text.Parsec
+import Text.Parsec.String
+import Text.XmlHtml
 
 data ParseException = ParseException String deriving (Show, Typeable)
 instance Exception ParseException

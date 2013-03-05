@@ -93,6 +93,7 @@ file is shown below.
     siteHost: tycho.ws
     rssTitle: Chronicles of a Tall Guy
     rssDescription: Home of Tycho Andersen on the Internets
+    sqlite3File: /home/tycho/blog.db
 
 You don't need to define all the configuration options (or even make a
 `haggis.conf`); the default values are listed below:
@@ -102,6 +103,38 @@ You don't need to define all the configuration options (or even make a
     no author in its metadata, no author will be generated
   * `siteHost`, `rssTitle`, and `rssDescription` are all used for generating
     RSS feeds; all three are required for haggis to build your RSS feed.
+  * `sqlite3File` is the path to an sqlite3 database on the local filesystem
+    which contains a comments table as described below.
+
+### Comments
+
+Haggis supports user comments on blog posts. Your `haggis.conf` needs to have
+connection information for one of the databases as listed above. Your database
+should have a table with the following schema:
+
+    ```sql
+    create table comments (
+      id INTEGER PRIMARY KEY,
+      slug TEXT,
+      name TEXT,
+      url TEXT,
+      email TEXT,
+      payload TEXT,
+      time DATETIME DEFAULT(DATETIME('NOW'))
+    );
+    ```
+
+The `slug` column indicates which post a particular comment was on. For
+example, if you host your blog at `http://example.com` with a `sitePath` of
+`blog` and someone comments on a post in the site structure at
+`misc/music.html`, the full URL to the post is
+`http://example.com/blog/misc/music.html`, and the haggis slug is
+`misc/music`.
+
+To post comments, the templates of your pages should have an html form in them
+that posts to some kind of script which inserts posts into the database haggis
+points at. Optionally, this script could re-generate the entire site after
+each user post, or you could schedule this via a cron job.
 
 # TODO
 

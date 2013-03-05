@@ -1,5 +1,4 @@
 module Text.Haggis.Config (
-  HaggisConfig(..),
   parseConfig,
   rootUri,
   readTemplates
@@ -23,24 +22,6 @@ import Text.Haggis.Parse
 import Text.Haggis.Types
 import Text.Parsec
 
-data HaggisConfig = HaggisConfig {
-  -- | Path to where the files are hosted, e.g: /foo, /, /foo/bar/, defaults
-  -- to /
-  sitePath :: String,
-
-  -- | Default author, so you don't have to put an author in every post's
-  -- metadata.
-  defaultAuthor :: Maybe String,
-
-  -- | Hostname where the blog is hosted, used for generating RSS feed links.
-  -- E.g. blog.example.com
-  siteHost :: Maybe String,
-  rssTitle :: Maybe String,
-  rssDescription :: Maybe String,
-
-  siteTemplates :: SiteTemplates
-} deriving (Show)
-
 parseConfig :: FilePath -> SiteTemplates -> IO HaggisConfig
 parseConfig fp ts = do
   inp <- catch (readFile fp)
@@ -57,6 +38,7 @@ buildConfig kvs = let get = (flip M.lookup) kvs in HaggisConfig
   (get "siteHost")
   (get "rssTitle")
   (get "rssDescription")
+  (get "sqlite3File")
 
 rootUri :: HaggisConfig -> Maybe URI
 rootUri c = siteHost c >>= \h -> parseURI $ "http://" ++ pappend h (sitePath c)

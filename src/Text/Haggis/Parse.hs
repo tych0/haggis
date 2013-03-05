@@ -29,21 +29,20 @@ import Data.Typeable
 import Data.Time.Calendar
 import Data.Time.Format
 
-import Text.Blaze.Renderer.XmlHtml
-import Text.Pandoc.Readers.Markdown
-import Text.Pandoc.Writers.HTML
-import Text.Pandoc.Options
-import Text.Pandoc.Definition
-import Text.Haggis.Types
-
 import System.Directory
 import System.Posix.Files.ByteString
 import System.FilePath
 import System.FilePath.Find
 import System.Locale
 
+import Text.Blaze.Renderer.XmlHtml
+import Text.Pandoc.Readers.Markdown
+import Text.Pandoc.Writers.HTML
+import Text.Pandoc.Options
+import Text.Pandoc.Definition
 import Text.Parsec
 import Text.Parsec.String
+import Text.Haggis.Types
 import Text.XmlHtml
 
 data ParseException = ParseException String deriving (Show, Typeable)
@@ -72,8 +71,8 @@ parseHtmlString :: String -> [Node]
 parseHtmlString s = let parseResult = parseHTML "string" (BS.pack s)
                     in either (throw . ParseException) docContent parseResult
 
-parsePage :: FilePath -> FilePath -> IO Page
-parsePage fp target = do
+parsePage :: FilePath -> FilePath -> [Comment] -> IO Page
+parsePage fp target comments = do
   (pageBuilder, content) <- findMetadata
   let Just reader = Map.lookup (takeExtension fp) fileTypes
       doc = reader content

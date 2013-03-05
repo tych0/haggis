@@ -19,6 +19,7 @@ import System.Directory
 import Text.XmlHtml
 
 import Text.Haggis.Binders
+import Text.Haggis.Comments
 import Text.Haggis.Config
 import Text.Haggis.Parse
 import Text.Haggis.RSS
@@ -30,7 +31,8 @@ buildSite :: FilePath -> FilePath -> IO ()
 buildSite src tgt = do
   templates <- readTemplates $ src </> "templates"
   config <- parseConfig (src </> "haggis.conf") templates
-  actions <- collectSiteElements (src </> "src") tgt
+  comments <- getComments config
+  actions <- collectSiteElements (src </> "src") tgt comments
   let (raws, pages) = partitionEithers actions
   readPages <- sequence pages
   let multiPages = generateAggregates readPages
@@ -87,8 +89,6 @@ generateAggregates ps =
       rootIndex = MultiPage recent (DirIndex "./")
   in rootIndex : concat [tagPages, indexPages, yearPages, monthPages]
   where
-    mapAccum :: Ord a => [(a, b)] -> M.Map a [b]
-    mapAccum = foldr (\(k,v) -> M.insertWith (++) k [v]) M.empty
     tags = mapAccum $ concatMap (\p -> zip (pageTags p) (repeat p)) ps
     indexes = let noroot = filter ((/=) "./" . dropFileName . pagePath) ps
               in mapAccum $ map (\p -> (dropFileName $ pagePath p, p)) noroot
@@ -108,8 +108,9 @@ type Accum = [Either (IO ()) (IO Page)]
 collectSiteElements ::
   FilePath ->
   FilePath ->
+  (FilePath -> [Comment]) ->
   IO Accum
-collectSiteElements src tgt = foldWithHandler
+collectSiteElements src tgt comments = foldWithHandler
   ignoreExceptions
   always
   accumulate
@@ -125,7 +126,8 @@ collectSiteElements src tgt = foldWithHandler
     makeAction info | supported info = Right $ do
       let path = infoPath info
           target = replaceExtension (mkRelative path) ".html"
-      parsePage path target
+          pageBuilder = parsePage path target
+      pageBuilder $ comments path
     makeAction info | isRegularFile $ infoStatus info = Left $ do
       let path = infoPath info
       let target = tgt </> mkRelative path

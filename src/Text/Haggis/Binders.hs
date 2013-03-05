@@ -13,7 +13,6 @@ import Data.Either
 import System.FilePath
 
 import Text.Haggis.Types
-import Text.Haggis.Config
 import Text.Hquery
 import Text.XmlHtml
 

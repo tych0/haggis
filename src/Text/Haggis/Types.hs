@@ -1,4 +1,6 @@
 module Text.Haggis.Types (
+  -- * A haggis configuration.
+  HaggisConfig(..),
   -- * Container for the required site templates
   SiteTemplates(..),
   -- * Representation of a single haggis page
@@ -10,10 +12,13 @@ module Text.Haggis.Types (
   MultiPageType(..),
   -- ** conversions for 'MultiPageType's
   mpTypeToPath,
-  mpTypeToTitle
+  mpTypeToTitle,
+  -- * A comment on a haggis post
+  Comment(..)
   ) where
 
 import Data.Time.Calendar
+import Data.Time.Clock
 import Data.Maybe
 
 import System.FilePath
@@ -64,3 +69,32 @@ data MultiPage = MultiPage {
   singlePages :: [Page],
   multiPageType :: MultiPageType
 } deriving (Show)
+
+data HaggisConfig = HaggisConfig {
+  -- | Path to where the files are hosted, e.g: /foo, /, /foo/bar/, defaults
+  -- to /
+  sitePath :: String,
+
+  -- | Default author, so you don't have to put an author in every post's
+  -- metadata.
+  defaultAuthor :: Maybe String,
+
+  -- | Hostname where the blog is hosted, used for generating RSS feed links.
+  -- E.g. blog.example.com
+  siteHost :: Maybe String,
+  rssTitle :: Maybe String,
+  rssDescription :: Maybe String,
+
+  -- | Sqlite3 file name, for comments.
+  sqlite3File :: Maybe FilePath,
+
+  siteTemplates :: SiteTemplates
+} deriving (Show)
+
+data Comment = Comment {
+  commenterName :: String,
+  commenterUrl :: String,
+  commenterEmail :: String,
+  commentPayload :: String,
+  commentTime :: UTCTime
+}

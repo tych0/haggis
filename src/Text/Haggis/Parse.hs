@@ -36,10 +36,10 @@ import System.FilePath.Find
 import System.Locale
 
 import Text.Blaze.Renderer.XmlHtml
+import Text.Pandoc.Definition
+import Text.Pandoc.Options
 import Text.Pandoc.Readers.Markdown
 import Text.Pandoc.Writers.HTML
-import Text.Pandoc.Options
-import Text.Pandoc.Definition
 import Text.Parsec
 import Text.Parsec.String
 import Text.Haggis.Types
@@ -97,7 +97,7 @@ parsePage fp target comments = do
                        author = Map.lookup "author" m
                        tags = fromMaybe [] $ fmap (splitOn ", ") $ Map.lookup "tags" m
                        date = Map.lookup "date" m >>= parseTime defaultTimeLocale "%F"
-                   in Page title author tags date target
+                   in Page title author tags date target comments
 
 dieOnParseError :: Show e => String -> Either e a -> a
 dieOnParseError prefix (Left m) = throw $ ParseException (prefix ++ show m)

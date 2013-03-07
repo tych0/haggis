@@ -78,7 +78,7 @@ generateSpecial config mps =
   in [archives, tags]
   where
     plainPage :: String -> FilePath -> [Node] -> Page
-    plainPage title fp content = Page title Nothing [] Nothing fp content
+    plainPage title fp content = Page title Nothing [] Nothing fp [] content -- TODO: Support comments?
 
 generateAggregates :: [Page] -> [MultiPage]
 generateAggregates ps =

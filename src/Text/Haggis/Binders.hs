@@ -5,14 +5,18 @@ module Text.Haggis.Binders (
   -- * Bind the specified tag to an anchor.
   bindTag,
   -- * Bind the archives and tags.
-  bindSpecial
+  bindSpecial,
+  bindComment
   ) where
 
 import Data.Either
 
 import System.FilePath
 
+import Text.Pandoc.Readers.Markdown
+import Text.Pandoc.Options
 import Text.Haggis.Types
+import Text.Haggis.Utils
 import Text.Hquery
 import Text.XmlHtml
 
@@ -23,17 +27,26 @@ bindPage config Page { pageTitle = title
                      , pageDate = date
                      , pagePath = path
                      , pageContent = content
+                     , pageComments = comments
                      } =
   let bindTags = if null tags
                    then hq ".tags" nothing
                    else hq ".tag *" (map (bindTag config) tags)
       auth = maybe (defaultAuthor config) Just author
+      commentCount = hq ".count *" ((show . length) comments)
   in hq ".title *" title .
      bindTags .
      hq ".author *" auth .
      hq ".date *" (fmap show date) .
      (hq ".content *" $ Group content) .
-     hq ".more [href]" (sitePath config </> path)
+     hq ".more [href]" (sitePath config </> path) .
+     hq ".comments *" commentCount
+
+bindComment :: Comment -> [Node] -> [Node]
+bindComment c = hq ".name *" (commenterName c)
+              . hq ".name [href]" (commenterUrl c)
+              . hq ".payload *" (pandocToHtml (readMarkdown def (commentPayload c)))
+              . hq ".datetime *" (show (commentTime c))
 
 bindTag :: HaggisConfig -> String -> [Node] -> [Node]
 bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .

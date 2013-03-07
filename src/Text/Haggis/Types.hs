@@ -19,6 +19,7 @@ module Text.Haggis.Types (
 
 import Data.Time.Calendar
 import Data.Time.Clock
+import Data.Time.LocalTime () -- for Show UTCTime
 import Data.Maybe
 
 import System.FilePath
@@ -40,6 +41,7 @@ data Page = Page {
   pageDate :: Maybe Day,
   -- The 'pagePath' is relative to the source dir.
   pagePath :: FilePath,
+  pageComments :: [Comment],
   -- This is the content as rendered by pandoc (i.e. it has not been bound to
   -- the single.html template)
   pageContent :: [Node]
@@ -97,4 +99,4 @@ data Comment = Comment {
   commenterEmail :: String,
   commentPayload :: String,
   commentTime :: UTCTime
-}
+} deriving (Show)

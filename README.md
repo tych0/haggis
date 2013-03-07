@@ -138,6 +138,7 @@ each user post, or you could schedule this via a cron job.
 
 # TODO
 
+  * sanatize comments markdown when rendered?
   * write some tests lol11
   * more sausage jokes
   * comments support

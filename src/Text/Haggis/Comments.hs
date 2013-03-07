@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable, FlexibleContexts #-}
 module Text.Haggis.Comments (
   getComments,
+  commentsEnabled,
   CommentException(..)
   ) where
 
@@ -40,8 +41,14 @@ getComments conf = do
     normalize = dropExtension . normalise . makeRelative (sitePath conf)
 
 getConnection :: HaggisConfig -> IO (Maybe ConnWrapper)
-getConnection conf =
-  T.sequence $ fmap (\c -> liftM ConnWrapper (connectSqlite3 c)) (sqlite3File conf)
+getConnection conf = T.sequence $ getConnectionBuilder conf
+
+getConnectionBuilder :: HaggisConfig -> Maybe (IO ConnWrapper)
+getConnectionBuilder conf =
+  fmap (\c -> liftM ConnWrapper (connectSqlite3 c)) (sqlite3File conf)
+
+commentsEnabled :: HaggisConfig -> Bool
+commentsEnabled = isJust . getConnectionBuilder
 
 queryComments :: ConnWrapper -> IO (M.Map FilePath [Comment])
 queryComments conn = do

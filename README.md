@@ -10,9 +10,11 @@ Haggis is available via hackage, so you can `cabal install haggis`. For
 non-haskellers on debian based distros, the full procedure might look
 something like:
 
-    sudo apt-get install cabal-install
-    cabal update
-    cabal install haggis
+```bash
+sudo apt-get install cabal-install
+cabal update
+cabal install haggis
+```
 
 # Usage
 
@@ -55,26 +57,30 @@ An example markdown blog post might look like this:
 Haggis will parse the stuff in between the `---`s as metadata, and then
 process the rest of the file as a markdown document. If your template is
 
-    <div class="page">
-      <h2 class="title"></h2>
-      <small>Posted by <span class="author"></span> on <span class="date"></span></small>
-      <div class="content"></div>
-      <span class="tags">Tags: <a href="#" class="tag"></a></span>
-    </div>
+```html
+<div class="page">
+  <h2 class="title"></h2>
+  <small>Posted by <span class="author"></span> on <span class="date"></span></small>
+  <div class="content"></div>
+  <span class="tags">Tags: <a href="#" class="tag"></a></span>
+</div>
+```
 
 You'd end up with something like:
 
-    <div class="page">
-      <h2 class="title">Haggis kicks ass</h2>
-      <small>Posted by <span class="author">tycho</span> on <span class="date">2013-02-19</span></small>
-      <div class="content">
-        Gaddamn, <a href="http://github.com/tycho/haggis">haggis</a> kicks ass!
-      </div>
-      <span class="tags">Tags:
-        <a href="/tags/haggis.html" class="tag">haggis</a>
-        <a href="/tags/whoopass.html" class="tag">whoopass</a>
-      </span>
-    </div>
+```html
+<div class="page">
+  <h2 class="title">Haggis kicks ass</h2>
+  <small>Posted by <span class="author">tycho</span> on <span class="date">2013-02-19</span></small>
+  <div class="content">
+    Gaddamn, <a href="http://github.com/tycho/haggis">haggis</a> kicks ass!
+  </div>
+  <span class="tags">Tags:
+    <a href="/tags/haggis.html" class="tag">haggis</a>
+    <a href="/tags/whoopass.html" class="tag">whoopass</a>
+  </span>
+</div>
+```
 
 ...which would then get inserted into the `#content` element of your root
 template. Since this post has a `date` entry in its metadata, it will show up
@@ -112,17 +118,17 @@ Haggis supports user comments on blog posts. Your `haggis.conf` needs to have
 connection information for one of the databases as listed above. Your database
 should have a table with the following schema:
 
-    ```sql
-    create table comments (
-      id INTEGER PRIMARY KEY,
-      slug TEXT,
-      name TEXT,
-      url TEXT,
-      email TEXT,
-      payload TEXT,
-      time DATETIME DEFAULT(DATETIME('NOW'))
-    );
-    ```
+```sql
+create table comments (
+  id INTEGER PRIMARY KEY,
+  slug TEXT,
+  name TEXT,
+  url TEXT,
+  email TEXT,
+  payload TEXT,
+  time DATETIME DEFAULT(DATETIME('NOW'))
+);
+```
 
 The `slug` column indicates which post a particular comment was on. For
 example, if you host your blog at `http://example.com` with a `sitePath` of

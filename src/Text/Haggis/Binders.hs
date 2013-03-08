@@ -40,7 +40,7 @@ bindPage config Page { pageTitle = title
      hq ".date *" (fmap show date) .
      (hq ".content *" $ Group content) .
      hq ".more [href]" (sitePath config </> path) .
-     hq ".comments *" commentCount
+     hq ".comments *" (commentCount : map bindComment comments)
 
 bindComment :: Comment -> [Node] -> [Node]
 bindComment c = hq ".name *" (commenterName c)

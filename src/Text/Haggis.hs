@@ -125,9 +125,10 @@ collectSiteElements src tgt comments = foldWithHandler
     makeAction :: FileInfo -> Either (IO ()) (IO Page)
     makeAction info | supported info = Right $ do
       let path = infoPath info
-          target = replaceExtension (mkRelative path) ".html"
+          rel = mkRelative path
+          target = replaceExtension rel ".html"
           pageBuilder = parsePage path target
-      pageBuilder $ comments path
+      pageBuilder $ comments rel
     makeAction info | isRegularFile $ infoStatus info = Left $ do
       let path = infoPath info
       let target = tgt </> mkRelative path

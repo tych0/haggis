@@ -95,8 +95,8 @@ data HaggisConfig = HaggisConfig {
 
 data Comment = Comment {
   commenterName :: String,
-  commenterUrl :: String,
-  commenterEmail :: String,
+  commenterUrl :: Maybe String,
+  commenterEmail :: Maybe String,
   commentPayload :: String,
   commentTime :: UTCTime
 } deriving (Show)

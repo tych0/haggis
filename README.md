@@ -121,12 +121,12 @@ should have a table with the following schema:
 ```sql
 create table comments (
   id INTEGER PRIMARY KEY,
-  slug TEXT,
-  name TEXT,
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
   url TEXT,
   email TEXT,
-  payload TEXT,
-  time DATETIME DEFAULT(DATETIME('NOW'))
+  payload TEXT NOT NULL,
+  time DATETIME DEFAULT(DATETIME('NOW')) NOT NULL
 );
 ```
 

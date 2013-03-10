@@ -38,7 +38,7 @@ getComments conf = do
     --   /foo/bar/baz.html -> bar/baz
     --   /foo/bar/bonk.html -> bar/bonk
     normalize :: FilePath -> FilePath
-    normalize = dropExtension . normalise . makeRelative (sitePath conf)
+    normalize = (dropExtension . normalise . makeRelative (sitePath conf))
 
 getConnection :: HaggisConfig -> IO (Maybe ConnWrapper)
 getConnection conf = T.sequence $ getConnectionBuilder conf
@@ -53,6 +53,7 @@ commentsEnabled = isJust . getConnectionBuilder
 queryComments :: ConnWrapper -> IO (M.Map FilePath [Comment])
 queryComments conn = do
   stmt <- prepare conn "select * from \"comments\";"
+  _ <- execute stmt []
   ms <- fetchAllRowsMap' stmt
   return $ mapAccum $ map toComment ms
   where

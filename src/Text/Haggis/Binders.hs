@@ -33,21 +33,23 @@ bindPage config Page { pageTitle = title
                    then hq ".tags" nothing
                    else hq ".tag *" (map (bindTag config) tags)
       auth = maybe (defaultAuthor config) Just author
-      commentCount = hq ".count *" ((show . length) comments)
   in hq ".title *" title .
      bindTags .
      hq ".author *" auth .
      hq ".date *" (fmap show date) .
      (hq ".content *" $ Group content) .
      hq ".more [href]" (sitePath config </> path) .
-     hq ".comment *" (commentCount : map bindComment comments)
+     hq ".commentCount *" ((show . length) comments) .
+     hq ".comment *" (map bindComment comments)
 
 bindComment :: Comment -> [Node] -> [Node]
-bindComment c = hq ".name *" (commenterName c)
-              . hq ".name [href]" (commenterUrl c)
+bindComment c = nameBind (commenterUrl c)
               . hq ".datetime *" (show (commentTime c))
               . hq ".payload *" (pandocToHtml (readMarkdown def (commentPayload c)))
 
+  where
+    nameBind (Just url) = hq ".name *" (commenterName c) . hq ".name [href]" url
+    nameBind Nothing = hq ".name" (commenterName c)
 bindTag :: HaggisConfig -> String -> [Node] -> [Node]
 bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .
                    hq "a *" (t ++ ", ")

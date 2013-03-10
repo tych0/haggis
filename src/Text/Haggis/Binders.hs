@@ -40,13 +40,13 @@ bindPage config Page { pageTitle = title
      hq ".date *" (fmap show date) .
      (hq ".content *" $ Group content) .
      hq ".more [href]" (sitePath config </> path) .
-     hq ".comments *" (commentCount : map bindComment comments)
+     hq ".comment *" (commentCount : map bindComment comments)
 
 bindComment :: Comment -> [Node] -> [Node]
 bindComment c = hq ".name *" (commenterName c)
               . hq ".name [href]" (commenterUrl c)
-              . hq ".payload *" (pandocToHtml (readMarkdown def (commentPayload c)))
               . hq ".datetime *" (show (commentTime c))
+              . hq ".payload *" (pandocToHtml (readMarkdown def (commentPayload c)))
 
 bindTag :: HaggisConfig -> String -> [Node] -> [Node]
 bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .

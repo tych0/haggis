@@ -1,5 +1,5 @@
 name:                haggis
-version:             0.1.0.0
+version:             0.1.1.0
 synopsis:            A static site generator with blogging/comments support
 homepage:            http://github.com/tych0/haggis
 license:             MIT

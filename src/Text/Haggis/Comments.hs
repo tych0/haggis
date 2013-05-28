@@ -16,8 +16,6 @@ import Data.Maybe
 import qualified Data.Traversable as T
 import Data.Typeable
 
-import Prelude hiding (catch)
-
 import System.FilePath
 
 import Text.Haggis.Types

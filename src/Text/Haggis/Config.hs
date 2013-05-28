@@ -5,15 +5,13 @@ module Text.Haggis.Config (
   ) where
 
 import Control.Applicative
-import Control.Exception
+import qualified Control.Exception as E
 
 import qualified Data.Map.Lazy as M
 import Data.Maybe
 import Data.String.Utils
 
 import Network.URI
-
-import Prelude hiding (catch)
 
 import System.FilePath
 import System.IO
@@ -24,8 +22,8 @@ import Text.Parsec
 
 parseConfig :: FilePath -> SiteTemplates -> IO HaggisConfig
 parseConfig fp ts = do
-  inp <- catch (readFile fp)
-               (\e -> do let err = show (e :: IOException)
+  inp <- E.catch (readFile fp)
+               (\e -> do let err = show (e :: E.IOException)
                          hPutStr stderr ("Problem reading: " ++ err)
                          return "")
   let kvs = dieOnParseError fp $ parse keyValueParser "" inp

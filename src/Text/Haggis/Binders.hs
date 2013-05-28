@@ -31,7 +31,7 @@ bindPage config Page { pageTitle = title
                      } =
   let bindTags = if null tags
                    then hq ".tags" nothing
-                   else hq ".tag *" (map (bindTag config) tags)
+                   else hq ".tag *" $ addCommas (map (bindTag config) tags)
       auth = maybe (defaultAuthor config) Just author
   in hq ".title *" title .
      bindTags .
@@ -52,7 +52,13 @@ bindComment c = nameBind (commenterUrl c)
     nameBind Nothing = hq ".name" (commenterName c)
 bindTag :: HaggisConfig -> String -> [Node] -> [Node]
 bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .
-                   hq "a *" (t ++ ", ")
+                   hq "a *" (t)
+
+addCommas :: [[Node] -> [Node]] -> [[Node] -> [Node]]
+addCommas ns | not (null ns) = let l = last ns
+                                   is = init ns
+                               in map (hq "* +" ", " .) is ++ [l]
+addCommas ns = ns
 
 bindSpecial :: HaggisConfig -> [MultiPage] -> [Node] -> [Node]
 bindSpecial config mps = let (archives, tags) = bindAggregates
@@ -64,7 +70,8 @@ bindSpecial config mps = let (archives, tags) = bindAggregates
                            hq "a *" (show y ++ " - " ++ show m)
                          bind (MultiPage xs typ@(Tag t)) = Right $
                            hq ".tag [href]" (sitePath config </> mpTypeToPath typ) .
-                           hq ".tag *" (t ++ " (" ++ show (length xs) ++ "), ")
+                           hq ".tag *" (t ++ " (" ++ show (length xs) ++ ")")
                          bind _ = Left $ hq "*" nothing
-                     in partitionEithers $ map bind mps
+                         (archives, tags) = partitionEithers $ map bind mps
+                     in (archives, addCommas tags)
 

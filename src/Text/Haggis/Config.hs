@@ -1,7 +1,11 @@
 module Text.Haggis.Config (
   parseConfig,
   rootUri,
-  readTemplates
+  readTemplates,
+  getBindPage,
+  getBindTag,
+  getBindComment,
+  getBindSpecial,
   ) where
 
 import Control.Applicative
@@ -18,7 +22,9 @@ import System.IO
 
 import Text.Haggis.Parse
 import Text.Haggis.Types
+import qualified Text.Haggis.Binders as Bind
 import Text.Parsec
+import Text.XmlHtml
 
 parseConfig :: FilePath -> SiteTemplates -> IO HaggisConfig
 parseConfig fp ts = do
@@ -29,7 +35,9 @@ parseConfig fp ts = do
   let kvs = dieOnParseError fp $ parse keyValueParser "" inp
   return $ buildConfig (M.fromList kvs) ts
 
-buildConfig :: M.Map String String -> SiteTemplates -> HaggisConfig
+buildConfig :: M.Map String String
+            -> SiteTemplates
+            -> HaggisConfig
 buildConfig kvs = let get = (flip M.lookup) kvs in HaggisConfig
   (fromMaybe "/" $ get "sitePath")
   (get "defaultAuthor")
@@ -37,6 +45,11 @@ buildConfig kvs = let get = (flip M.lookup) kvs in HaggisConfig
   (get "rssTitle")
   (get "rssDescription")
   (get "sqlite3File")
+  -- binders
+  Nothing
+  Nothing
+  Nothing
+  Nothing
 
 rootUri :: HaggisConfig -> Maybe URI
 rootUri c = siteHost c >>= \h -> parseURI $ "http://" ++ pappend h (sitePath c)
@@ -54,3 +67,14 @@ readTemplates fp = SiteTemplates <$> readTemplate (fp </> "root.html")
                                  <*> readTemplate (fp </> "tags.html")
                                  <*> readTemplate (fp </> "archives.html")
 
+getBindPage :: HaggisConfig -> Page -> [Node] -> [Node]
+getBindPage c = fromMaybe (Bind.bindPage c) (bindPage c)
+
+getBindTag :: HaggisConfig -> String -> [Node] -> [Node]
+getBindTag c = fromMaybe (Bind.bindTag c) (bindTag c)
+
+getBindComment :: HaggisConfig -> Comment -> [Node] -> [Node]
+getBindComment c = fromMaybe Bind.bindComment (bindComment c)
+
+getBindSpecial :: HaggisConfig -> [MultiPage] -> [Node] -> [Node]
+getBindSpecial c = fromMaybe (Bind.bindSpecial c) (bindSpecial c)

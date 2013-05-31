@@ -15,7 +15,7 @@ import System.FilePath
 
 import Text.Pandoc.Readers.Markdown
 import Text.Pandoc.Options
-import Text.Haggis.Types
+import Text.Haggis.Types hiding (bindPage, bindComment, bindTag, bindSpecial)
 import Text.Haggis.Utils
 import Text.Hquery
 import Text.XmlHtml

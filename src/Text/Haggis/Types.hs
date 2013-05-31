@@ -82,7 +82,7 @@ data HaggisConfig = HaggisConfig {
   defaultAuthor :: Maybe String,
 
   -- | Hostname where the blog is hosted, used for generating RSS feed links.
-  -- E.g. blog.example.com
+  -- E.g. blog.example.com, blog.example.com:8080
   siteHost :: Maybe String,
   rssTitle :: Maybe String,
   rssDescription :: Maybe String,
@@ -90,8 +90,14 @@ data HaggisConfig = HaggisConfig {
   -- | Sqlite3 file name, for comments.
   sqlite3File :: Maybe FilePath,
 
+  -- * Custom binders for pages. See "Text.Hquery.Binders" for the defaults.
+  bindPage :: Maybe (Page -> [Node] -> [Node]),
+  bindTag :: Maybe (String -> [Node] -> [Node]),
+  bindComment :: Maybe (Comment -> [Node] -> [Node]),
+  bindSpecial :: Maybe ([MultiPage] -> [Node] -> [Node]),
+
   siteTemplates :: SiteTemplates
-} deriving (Show)
+}
 
 data Comment = Comment {
   commenterName :: String,

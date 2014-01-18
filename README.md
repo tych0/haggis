@@ -11,8 +11,9 @@ non-haskellers on debian based distros, the full procedure might look
 something like:
 
 ```bash
-sudo apt-get install cabal-install
+sudo apt-get install cabal-install libsqlite3-dev
 cabal update
+cabal install happy alex
 cabal install haggis
 ```
 

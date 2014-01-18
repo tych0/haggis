@@ -90,7 +90,7 @@ data HaggisConfig = HaggisConfig {
   -- | Sqlite3 file name, for comments.
   sqlite3File :: Maybe FilePath,
 
-  -- * Custom binders for pages. See "Text.Hquery.Binders" for the defaults.
+  -- * Custom binders for pages. See "Text.Haggis.Binders" for the defaults.
   bindPage :: Maybe (Page -> [Node] -> [Node]),
   bindTag :: Maybe (String -> [Node] -> [Node]),
   bindComment :: Maybe (Comment -> [Node] -> [Node]),

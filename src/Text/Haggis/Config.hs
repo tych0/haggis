@@ -45,6 +45,7 @@ buildConfig kvs = let get = (flip M.lookup) kvs in HaggisConfig
   (get "rssTitle")
   (get "rssDescription")
   (get "sqlite3File")
+  (get "indexTitle")
   -- binders
   Nothing
   Nothing

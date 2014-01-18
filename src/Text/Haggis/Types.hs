@@ -60,10 +60,10 @@ mpTypeToPath (Archive y m) =
   let month = fromMaybe "index" $ fmap show m
   in "archives" </> show y </> month <.> "html"
 
-mpTypeToTitle :: MultiPageType -> String
-mpTypeToTitle (Tag t) = "Tagged: " ++ t
-mpTypeToTitle (DirIndex d) = "Filed under: " ++ d
-mpTypeToTitle (Archive y m) =
+mpTypeToTitle :: HaggisConfig -> MultiPageType -> String
+mpTypeToTitle _ (Tag t) = "Tagged: " ++ t
+mpTypeToTitle conf (DirIndex d) = fromMaybe ("Filed under: " ++ d) (indexTitle conf)
+mpTypeToTitle _ (Archive y m) =
   let month = fromMaybe "" $ fmap ((" - " ++) . show) m
   in "Posts from: " ++ (show y) ++ month
 
@@ -89,6 +89,9 @@ data HaggisConfig = HaggisConfig {
 
   -- | Sqlite3 file name, for comments.
   sqlite3File :: Maybe FilePath,
+
+  -- | Index page title.
+  indexTitle :: Maybe String,
 
   -- * Custom binders for pages. See "Text.Haggis.Binders" for the defaults.
   bindPage :: Maybe (Page -> [Node] -> [Node]),

@@ -62,7 +62,7 @@ writeSite ps mps config out = do
       let xform = hq ".page *" $ map (getBindPage config) $ singlePages mp
           content = xform $ multiple (siteTemplates config)
           path = mpTypeToPath $ multiPageType mp
-      in writeThing path (mpTypeToTitle $ multiPageType mp) content
+      in writeThing path (mpTypeToTitle config $ multiPageType mp) content
 
 ensureDirExists :: FilePath -> IO ()
 ensureDirExists = createDirectoryIfMissing True . dropFileName

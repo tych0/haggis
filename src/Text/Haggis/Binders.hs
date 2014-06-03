@@ -50,6 +50,7 @@ bindComment c = nameBind (commenterUrl c)
   where
     nameBind (Just url) = hq ".name *" (commenterName c) . hq ".name [href]" url
     nameBind Nothing = hq ".name" (commenterName c)
+
 bindTag :: HaggisConfig -> String -> [Node] -> [Node]
 bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .
                    hq "a *" (t)
@@ -57,7 +58,7 @@ bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .
 addCommas :: [[Node] -> [Node]] -> [[Node] -> [Node]]
 addCommas ns | not (null ns) = let l = last ns
                                    is = init ns
-                               in map (hq "* +" ", " .) is ++ [l]
+                               in map ((.) $ hq "* +" ", ") is ++ [l]
 addCommas ns = ns
 
 bindSpecial :: HaggisConfig -> [MultiPage] -> [Node] -> [Node]

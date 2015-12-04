@@ -37,19 +37,21 @@ import System.Locale
 
 import Text.Blaze.Renderer.XmlHtml
 import Text.Pandoc.Definition
+import Text.Pandoc.Error
 import Text.Pandoc.Options
 import Text.Pandoc.Readers.Markdown
 import Text.Pandoc.Writers.HTML
 import Text.Parsec
 import Text.Parsec.String
 import Text.Haggis.Types
+import Text.Haggis.Utils
 import Text.XmlHtml
 
 data ParseException = ParseException String deriving (Show, Typeable)
 instance Exception ParseException
 
-fileTypes :: Map.Map String (String -> Pandoc)
-fileTypes = Map.fromList [ (".md", readMarkdown def)
+fileTypes :: Map.Map String (String -> Either PandocError Pandoc)
+fileTypes = Map.fromList [ (".md", readMarkdown readOpts)
                          ]
 
 isSupportedExt :: String -> Bool
@@ -76,7 +78,7 @@ parsePage fp target comments = do
   (pageBuilder, content) <- findMetadata
   let Just reader = Map.lookup (takeExtension fp) fileTypes
       doc = reader content
-  return $ pageBuilder $ renderHtmlNodes $ writeHtml def doc
+  return $ pageBuilder $ pandocToHtml doc
   where
     findMetadata :: IO ([Node] -> Page, String)
     findMetadata = do

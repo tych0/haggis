@@ -2,13 +2,10 @@ module Text.Haggis.Utils where
 
 import Blaze.ByteString.Builder
 
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Map.Lazy as M
-import qualified Data.Set as S
 import qualified Data.Text as T
 
-import Text.Blaze.Renderer.XmlHtml
 import qualified Text.Blaze.Html.Renderer.Utf8 as PHTML
 import Text.Pandoc.Definition
 import Text.Pandoc.Error

@@ -35,10 +35,3 @@ pandocToHtml (Right doc) =
   in case result of
        Left err -> [TextNode (T.pack (show err))]
        Right doc2 -> docContent doc2
-
-readOpts :: ReaderOptions
-readOpts = def {
-  readerExtensions = S.fromList [ Ext_raw_html ],
-  readerParseRaw = True,
-  readerSmart = True
-}

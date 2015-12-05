@@ -13,6 +13,7 @@ import Data.Either
 
 import System.FilePath
 
+import Text.Pandoc.Options
 import Text.Pandoc.Readers.Markdown
 import Text.Haggis.Types hiding (bindPage, bindComment, bindTag, bindSpecial)
 import Text.Haggis.Utils
@@ -44,7 +45,7 @@ bindPage config Page { pageTitle = title
 bindComment :: Comment -> [Node] -> [Node]
 bindComment c = nameBind (commenterUrl c)
               . hq ".datetime *" (show (commentTime c))
-              . hq ".payload *" (pandocToHtml (readMarkdown readOpts (commentPayload c)))
+              . hq ".payload *" (pandocToHtml (readMarkdown def (commentPayload c)))
 
   where
     nameBind (Just url) = hq ".name *" (commenterName c) . hq ".name [href]" url

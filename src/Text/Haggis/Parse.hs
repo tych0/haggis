@@ -51,7 +51,7 @@ data ParseException = ParseException String deriving (Show, Typeable)
 instance Exception ParseException
 
 fileTypes :: Map.Map String (String -> Either PandocError Pandoc)
-fileTypes = Map.fromList [ (".md", readMarkdown readOpts)
+fileTypes = Map.fromList [ (".md", readMarkdown def)
                          ]
 
 isSupportedExt :: String -> Bool

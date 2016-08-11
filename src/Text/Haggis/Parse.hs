@@ -33,7 +33,7 @@ import System.Directory
 import System.Posix.Files.ByteString
 import System.FilePath
 import System.FilePath.Find
-import System.Locale
+import System.Locale hiding (defaultTimeLocale)
 
 import Text.Pandoc.Definition
 import Text.Pandoc.Error

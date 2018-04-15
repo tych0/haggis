@@ -60,7 +60,7 @@ supported info = (isRegularFile . infoStatus) info &&
                  (isSupportedExt . takeExtension . infoPath) info
 
 parseDate :: String -> Maybe Day
-parseDate = parseTime defaultTimeLocale "%F"
+parseDate = parseTimeM True defaultTimeLocale "%F"
 
 readTemplate :: FilePath -> IO [Node]
 readTemplate fp = do
@@ -96,7 +96,7 @@ parsePage fp target comments = do
                        title = fromMaybe "" $ Map.lookup "title" m
                        author = Map.lookup "author" m
                        tags = fromMaybe [] $ fmap (splitOn ", ") $ Map.lookup "tags" m
-                       date = Map.lookup "date" m >>= parseTime defaultTimeLocale "%F"
+                       date = Map.lookup "date" m >>= parseTimeM True defaultTimeLocale "%F"
                    in Page title author tags date target comments
 
 dieOnParseError :: Show e => String -> Either e a -> a

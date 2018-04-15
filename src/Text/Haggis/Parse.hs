@@ -26,6 +26,8 @@ import Data.List.Split
 import qualified Data.Map as Map
 import Data.Maybe
 import Data.Typeable
+import Data.String
+import Data.Text.Internal
 import Data.Time.Calendar
 import Data.Time.Format
 
@@ -35,6 +37,7 @@ import System.FilePath
 import System.FilePath.Find
 import System.Locale hiding (defaultTimeLocale)
 
+import Text.Pandoc.Class hiding (FileInfo)
 import Text.Pandoc.Definition
 import Text.Pandoc.Error
 import Text.Pandoc.Options
@@ -48,7 +51,7 @@ import Text.XmlHtml
 data ParseException = ParseException String deriving (Show, Typeable)
 instance Exception ParseException
 
-fileTypes :: Map.Map String (String -> Either PandocError Pandoc)
+fileTypes :: Map.Map String (Text -> PandocIO Pandoc)
 fileTypes = Map.fromList [ (".md", readMarkdown def)
                          ]
 
@@ -75,7 +78,7 @@ parsePage :: FilePath -> FilePath -> [Comment] -> IO Page
 parsePage fp target comments = do
   (pageBuilder, content) <- findMetadata
   let Just reader = Map.lookup (takeExtension fp) fileTypes
-      doc = reader content
+  doc <- runIO $ reader $ fromString content
   return $ pageBuilder $ pandocToHtml doc
   where
     findMetadata :: IO ([Node] -> Page, String)

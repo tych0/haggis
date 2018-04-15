@@ -26,7 +26,7 @@ library
                  time >= 1.4, old-locale, parsec >= 3.1, split >= 0.2,
                  text >= 0.11, rss >= 3000.2, network-uri >= 2.4, MissingH >= 1.2,
                  HDBC >= 2.3, HDBC-sqlite3 >= 2.3, convertible >= 1.0.11,
-                 blaze-html >= 0.8
+                 blaze-html >= 0.8, blaze-markup >= 0.8.2.0
   hs-source-dirs: src
   exposed-modules: Text.Haggis, Text.Haggis.Parse, Text.Haggis.Types,
                    Text.Haggis.Binders, Text.Haggis.RSS, Text.Haggis.Utils,

@@ -10,9 +10,12 @@ module Text.Haggis.Binders (
   ) where
 
 import Data.Either
+import Data.String
+import Data.Text.Internal
 
 import System.FilePath
 
+import Text.Pandoc.Class
 import Text.Pandoc.Options
 import Text.Pandoc.Readers.Markdown
 import Text.Haggis.Types hiding (bindPage, bindComment, bindTag, bindSpecial)
@@ -45,11 +48,12 @@ bindPage config Page { pageTitle = title
 bindComment :: Comment -> [Node] -> [Node]
 bindComment c = nameBind (commenterUrl c)
               . hq ".datetime *" (show (commentTime c))
-              . hq ".payload *" (pandocToHtml (readMarkdown def (commentPayload c)))
+              . hq ".payload *" (pandocToHtml $ runPure (readMarkdown def payload))
 
   where
     nameBind (Just url) = hq ".name *" (commenterName c) . hq ".name [href]" url
     nameBind Nothing = hq ".name" (commenterName c)
+    payload = fromString $ commentPayload c
 
 bindTag :: HaggisConfig -> String -> [Node] -> [Node]
 bindTag config t = hq "a [href]" (sitePath config </> (mpTypeToPath $ Tag t)) .

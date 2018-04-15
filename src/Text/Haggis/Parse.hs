@@ -17,7 +17,6 @@ module Text.Haggis.Parse (
  keyValueParser
  ) where
 
-import Control.Applicative hiding (many)
 import Control.Exception
 
 import qualified Data.ByteString.Char8 as BS
@@ -35,11 +34,9 @@ import System.Directory
 import System.Posix.Files.ByteString
 import System.FilePath
 import System.FilePath.Find
-import System.Locale hiding (defaultTimeLocale)
 
 import Text.Pandoc.Class hiding (FileInfo)
 import Text.Pandoc.Definition
-import Text.Pandoc.Error
 import Text.Pandoc.Options
 import Text.Pandoc.Readers.Markdown
 import Text.Parsec

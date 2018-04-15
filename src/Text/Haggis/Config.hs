@@ -8,7 +8,6 @@ module Text.Haggis.Config (
   getBindSpecial,
   ) where
 
-import Control.Applicative
 import qualified Control.Exception as E
 
 import qualified Data.Map.Lazy as M

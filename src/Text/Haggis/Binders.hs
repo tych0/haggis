@@ -11,7 +11,6 @@ module Text.Haggis.Binders (
 
 import Data.Either
 import Data.String
-import Data.Text.Internal
 
 import System.FilePath
 

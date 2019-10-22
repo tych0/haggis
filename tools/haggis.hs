@@ -1,7 +1,5 @@
 module Main where
 
-import Data.Semigroup
-
 import Options.Applicative
 
 import Text.Haggis
